@@ -79,7 +79,20 @@ public enum CreateFlag {
   /**
    * Force closed blocks to disk. Similar to POSIX O_SYNC. See javadoc for description.
    */
-  SYNC_BLOCK((short) 0x08);
+  SYNC_BLOCK((short) 0x08),
+
+  // TODO: add a new function to FileSystem rather than overloading these
+  // flags, probably.
+  BANK0((short) 0x10),
+  BANK1((short) 0x11),
+  BANK2((short) 0x12),
+  BANK3((short) 0x13),
+  BANK4((short) 0x14),
+  BANK5((short) 0x15),
+  BANK6((short) 0x16),
+  BANK7((short) 0x17),
+  BANK8((short) 0x18),
+  BANK9((short) 0x19);
 
   private final short mode;
 

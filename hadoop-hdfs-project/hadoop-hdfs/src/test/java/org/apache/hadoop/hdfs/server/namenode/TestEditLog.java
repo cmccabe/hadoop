@@ -152,7 +152,7 @@ public class TestEditLog {
 
       for (int i = 0; i < numTransactions; i++) {
         INodeFileUnderConstruction inode = new INodeFileUnderConstruction(
-                            p, replication, blockSize, 0, "", "", null);
+                            p, replication, blockSize, 0, "", "", null, 0);
         editLog.logOpenFile("/filename" + (startIndex + i), inode);
         editLog.logCloseFile("/filename" + (startIndex + i), inode);
         editLog.logSync();

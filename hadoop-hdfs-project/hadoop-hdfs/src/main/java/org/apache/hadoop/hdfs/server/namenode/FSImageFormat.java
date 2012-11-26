@@ -308,6 +308,7 @@ class FSImageFormat {
     long modificationTime = 0;
     long atime = 0;
     long blockSize = 0;
+    int bank = 0;
     
     int imgVersion = getLayoutVersion();
     short replication = in.readShort();
@@ -344,14 +345,17 @@ class FSImageFormat {
     if (numBlocks == -2) {
       symlink = Text.readString(in);
     }
-    
     PermissionStatus permissions = PermissionStatus.read(in);
+    if ((blocks != null) && (LayoutVersion.supports(
+        Feature.HIERARCHICAL_STORAGE_MANAGEMENT, imgVersion))) {
+      bank = in.readInt();
+    }
 
     return INode.newINode(permissions, blocks, symlink, replication,
-        modificationTime, atime, nsQuota, dsQuota, blockSize);
+        modificationTime, atime, nsQuota, dsQuota, blockSize, bank);
   }
 
-    private void loadFilesUnderConstruction(DataInputStream in)
+  private void loadFilesUnderConstruction(DataInputStream in)
     throws IOException {
       FSDirectory fsDir = namesystem.dir;
       int size = in.readInt();
@@ -360,7 +364,8 @@ class FSImageFormat {
 
       for (int i = 0; i < size; i++) {
         INodeFileUnderConstruction cons =
-          FSImageSerialization.readINodeUnderConstruction(in);
+          FSImageSerialization.readINodeUnderConstruction(in,
+              getLayoutVersion());
 
         // verify that file exists in namespace
         String path = cons.getLocalName();

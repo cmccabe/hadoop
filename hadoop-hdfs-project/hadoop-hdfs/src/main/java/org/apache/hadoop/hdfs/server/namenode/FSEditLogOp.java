@@ -171,6 +171,7 @@ public abstract class FSEditLogOp {
     PermissionStatus permissions;
     String clientName;
     String clientMachine;
+    int bank;
 
     private AddCloseOp(FSEditLogOpCodes opCode) {
       super(opCode);
@@ -236,6 +237,14 @@ public abstract class FSEditLogOp {
       return (T)this;
     }
 
+    public int getBank() {
+      return this.bank;
+    }
+
+    public void setBank(int bank) {
+      this.bank = bank;
+    }
+
     @Override
     public 
     void writeFields(DataOutputStream out) throws IOException {
@@ -251,6 +260,7 @@ public abstract class FSEditLogOp {
         FSImageSerialization.writeString(clientName,out);
         FSImageSerialization.writeString(clientMachine,out);
       }
+      FSImageSerialization.writeInt(bank, out);
     }
 
     @Override
@@ -304,6 +314,12 @@ public abstract class FSEditLogOp {
         this.clientName = "";
         this.clientMachine = "";
       }
+      if (LayoutVersion.supports(Feature.HIERARCHICAL_STORAGE_MANAGEMENT,
+          logVersion)) {
+        this.bank = FSImageSerialization.readInt(in);
+      } else {
+        this.bank = 0;
+      }
     }
 
     static final public int MAX_BLOCKS = 1024 * 1024 * 64;
@@ -351,6 +367,8 @@ public abstract class FSEditLogOp {
       builder.append(clientMachine);
       builder.append(", opCode=");
       builder.append(opCode);
+      builder.append(", bank=");
+      builder.append(bank);
       builder.append(", txid=");
       builder.append(txid);
       builder.append("]");
@@ -372,6 +390,8 @@ public abstract class FSEditLogOp {
           Long.valueOf(blockSize).toString());
       XMLUtils.addSaxString(contentHandler, "CLIENT_NAME", clientName);
       XMLUtils.addSaxString(contentHandler, "CLIENT_MACHINE", clientMachine);
+      XMLUtils.addSaxString(contentHandler, "BANK",
+          Integer.valueOf(bank).toString());
       for (Block b : blocks) {
         FSEditLogOp.blockToXml(contentHandler, b);
       }
@@ -398,6 +418,7 @@ public abstract class FSEditLogOp {
       }
       this.permissions =
           permissionStatusFromXml(st.getChildren("PERMISSION_STATUS").get(0));
+      this.bank = Integer.valueOf(st.getValue("BANK"));
     }
   }
 

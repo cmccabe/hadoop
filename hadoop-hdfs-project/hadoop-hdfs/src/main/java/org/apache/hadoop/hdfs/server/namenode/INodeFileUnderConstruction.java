@@ -54,9 +54,10 @@ class INodeFileUnderConstruction extends INodeFile implements MutableBlockCollec
                              long modTime,
                              String clientName,
                              String clientMachine,
-                             DatanodeDescriptor clientNode) {
+                             DatanodeDescriptor clientNode,
+                             int bank) {
     super(permissions.applyUMask(UMASK), BlockInfo.EMPTY_ARRAY, replication,
-        modTime, modTime, preferredBlockSize);
+        modTime, modTime, preferredBlockSize, bank);
     this.clientName = clientName;
     this.clientMachine = clientMachine;
     this.clientNode = clientNode;
@@ -70,9 +71,10 @@ class INodeFileUnderConstruction extends INodeFile implements MutableBlockCollec
                              PermissionStatus perm,
                              String clientName,
                              String clientMachine,
-                             DatanodeDescriptor clientNode) {
+                             DatanodeDescriptor clientNode,
+                             int bank) {
     super(perm, blocks, blockReplication, modificationTime, modificationTime,
-          preferredBlockSize);
+          preferredBlockSize, bank);
     setLocalName(name);
     this.clientName = clientName;
     this.clientMachine = clientMachine;
@@ -116,9 +118,9 @@ class INodeFileUnderConstruction extends INodeFile implements MutableBlockCollec
                                   getBlockReplication(),
                                   getModificationTime(),
                                   getModificationTime(),
-                                  getPreferredBlockSize());
+                                  getPreferredBlockSize(),
+                                  getBank());
     return obj;
-    
   }
   
   /**

@@ -1747,6 +1747,30 @@ public class FSNamesystem implements Namesystem, FSClusterStats,
     }
   }
 
+  private static int flagsToBank(EnumSet<CreateFlag> flag) {
+    if (flag.contains(CreateFlag.BANK0))
+      return 0;
+    if (flag.contains(CreateFlag.BANK1))
+      return 1;
+    if (flag.contains(CreateFlag.BANK2))
+      return 2;
+    if (flag.contains(CreateFlag.BANK3))
+      return 3;
+    if (flag.contains(CreateFlag.BANK4))
+      return 4;
+    if (flag.contains(CreateFlag.BANK5))
+      return 5;
+    if (flag.contains(CreateFlag.BANK6))
+      return 6;
+    if (flag.contains(CreateFlag.BANK7))
+      return 7;
+    if (flag.contains(CreateFlag.BANK8))
+      return 8;
+    if (flag.contains(CreateFlag.BANK9))
+      return 9;
+    return 0;
+  }
+  
   /**
    * Create new or open an existing file for append.<p>
    * 
@@ -1847,7 +1871,8 @@ public class FSNamesystem implements Namesystem, FSClusterStats,
         // increment global generation stamp
         long genstamp = nextGenerationStamp();
         INodeFileUnderConstruction newNode = dir.addFile(src, permissions,
-            replication, blockSize, holder, clientMachine, clientNode, genstamp);
+            replication, blockSize, holder, clientMachine, clientNode, genstamp,
+            flagsToBank(flag));
         if (newNode == null) {
           throw new IOException("DIR* NameSystem.startFile: " +
                                 "Unable to add file to namespace.");
@@ -1895,7 +1920,8 @@ public class FSNamesystem implements Namesystem, FSClusterStats,
                                     file.getPermissionStatus(),
                                     leaseHolder,
                                     clientMachine,
-                                    clientNode);
+                                    clientNode,
+                                    file.getBank());
     dir.replaceNode(src, file, cons);
     leaseManager.addLease(cons.getClientName(), src);
     

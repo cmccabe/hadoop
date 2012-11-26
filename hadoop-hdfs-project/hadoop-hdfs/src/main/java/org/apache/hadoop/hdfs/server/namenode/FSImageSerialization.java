@@ -29,9 +29,12 @@ import org.apache.hadoop.fs.permission.PermissionStatus;
 import org.apache.hadoop.hdfs.DFSUtil;
 import org.apache.hadoop.hdfs.DeprecatedUTF8;
 import org.apache.hadoop.hdfs.protocol.Block;
+import org.apache.hadoop.hdfs.protocol.LayoutVersion;
+import org.apache.hadoop.hdfs.protocol.LayoutVersion.Feature;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfo;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfoUnderConstruction;
 import org.apache.hadoop.hdfs.server.common.HdfsServerConstants.BlockUCState;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.ShortWritable;
 import org.apache.hadoop.io.Text;
@@ -71,6 +74,7 @@ public class FSImageSerialization {
   static private final class TLData {
     final DeprecatedUTF8 U_STR = new DeprecatedUTF8();
     final ShortWritable U_SHORT = new ShortWritable();
+    final IntWritable U_INT = new IntWritable();
     final LongWritable U_LONG = new LongWritable();
     final FsPermission FILE_PERM = new FsPermission((short) 0);
   }
@@ -79,7 +83,7 @@ public class FSImageSerialization {
   // from the input stream
   //
   static INodeFileUnderConstruction readINodeUnderConstruction(
-                            DataInputStream in) throws IOException {
+                            DataInputStream in, int imgVersion) throws IOException {
     byte[] name = readBytes(in);
     short blockReplication = in.readShort();
     long modificationTime = in.readLong();
@@ -107,6 +111,12 @@ public class FSImageSerialization {
     int numLocs = in.readInt();
     assert numLocs == 0 : "Unexpected block locations";
 
+    int bank = 0;
+    if (LayoutVersion.supports(Feature.HIERARCHICAL_STORAGE_MANAGEMENT,
+        imgVersion)) {
+      bank = in.readInt();
+    }
+    
     return new INodeFileUnderConstruction(name, 
                                           blockReplication, 
                                           modificationTime,
@@ -115,7 +125,8 @@ public class FSImageSerialization {
                                           perm,
                                           clientName,
                                           clientMachine,
-                                          null);
+                                          null,
+                                          bank);
   }
 
   // Helper function that writes an INodeUnderConstruction
@@ -139,6 +150,7 @@ public class FSImageSerialization {
     writeString(cons.getClientMachine(), out);
 
     out.writeInt(0); //  do not store locations of last block
+    out.writeInt(cons.getBank());
   }
 
   /*
@@ -187,6 +199,7 @@ public class FSImageSerialization {
       PermissionStatus.write(out, fileINode.getUserName(),
                              fileINode.getGroupName(),
                              filePerm);
+      out.writeInt(fileINode.getBank());
     }
   }
 
@@ -211,7 +224,20 @@ public class FSImageSerialization {
     ustr.set(str);
     ustr.write(out);
   }
+  
+  /** read the int value */
+  static int readInt(DataInputStream in) throws IOException {
+    IntWritable ustr = TL_DATA.get().U_INT;
+    ustr.readFields(in);
+    return ustr.get();
+  }
 
+  /** write the int value */
+  static void writeInt(int value, DataOutputStream out) throws IOException {
+    IntWritable uInt = TL_DATA.get().U_INT;
+    uInt.set(value);
+    uInt.write(out);
+  }
   
   /** read the long value */
   static long readLong(DataInputStream in) throws IOException {
