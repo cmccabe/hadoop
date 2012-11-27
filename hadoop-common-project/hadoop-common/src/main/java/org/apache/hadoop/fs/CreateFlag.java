@@ -148,4 +148,81 @@ public enum CreateFlag {
           + ". Create option is not specified in " + flag);
     }
   }
+
+  public final static int DEFAULT_BANK = 0;
+  
+  public static boolean flagsContainsBank(EnumSet<CreateFlag> flag) {
+    if (flag.contains(CreateFlag.BANK0))
+      return true;
+    if (flag.contains(CreateFlag.BANK1))
+      return true;
+    if (flag.contains(CreateFlag.BANK2))
+      return true;
+    if (flag.contains(CreateFlag.BANK3))
+      return true;
+    if (flag.contains(CreateFlag.BANK4))
+      return true;
+    if (flag.contains(CreateFlag.BANK5))
+      return true;
+    if (flag.contains(CreateFlag.BANK6))
+      return true;
+    if (flag.contains(CreateFlag.BANK7))
+      return true;
+    if (flag.contains(CreateFlag.BANK8))
+      return true;
+    if (flag.contains(CreateFlag.BANK9))
+      return true;
+    return false;
+  }
+
+  public static int flagsToBank(EnumSet<CreateFlag> flag) {
+    if (flag.contains(CreateFlag.BANK0))
+      return 0;
+    if (flag.contains(CreateFlag.BANK1))
+      return 1;
+    if (flag.contains(CreateFlag.BANK2))
+      return 2;
+    if (flag.contains(CreateFlag.BANK3))
+      return 3;
+    if (flag.contains(CreateFlag.BANK4))
+      return 4;
+    if (flag.contains(CreateFlag.BANK5))
+      return 5;
+    if (flag.contains(CreateFlag.BANK6))
+      return 6;
+    if (flag.contains(CreateFlag.BANK7))
+      return 7;
+    if (flag.contains(CreateFlag.BANK8))
+      return 8;
+    if (flag.contains(CreateFlag.BANK9))
+      return 9;
+    return DEFAULT_BANK;
+  }
+
+  public static CreateFlag bankToFlag(int bank) {
+    switch (bank) {
+      case 0:
+        return CreateFlag.BANK0;
+      case 1:
+        return CreateFlag.BANK1;
+      case 2:
+        return CreateFlag.BANK2;
+      case 3:
+        return CreateFlag.BANK3;
+      case 4:
+        return CreateFlag.BANK4;
+      case 5:
+        return CreateFlag.BANK5;
+      case 6:
+        return CreateFlag.BANK6;
+      case 7:
+        return CreateFlag.BANK7;
+      case 8:
+        return CreateFlag.BANK8;
+      case 9:
+        return CreateFlag.BANK9;
+      default:
+        throw new RuntimeException("invalid bank " + bank);
+    }
+  }
 }
