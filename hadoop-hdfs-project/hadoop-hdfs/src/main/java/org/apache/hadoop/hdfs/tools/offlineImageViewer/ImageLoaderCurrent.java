@@ -123,7 +123,7 @@ class ImageLoaderCurrent implements ImageLoader {
                                       new SimpleDateFormat("yyyy-MM-dd HH:mm");
   private static int[] versions = { -16, -17, -18, -19, -20, -21, -22, -23,
       -24, -25, -26, -27, -28, -30, -31, -32, -33, -34, -35, -36, -37, -38, -39,
-      -40};
+      -40, -41};
   private int imageVersion = 0;
 
   /* (non-Javadoc)
@@ -184,7 +184,7 @@ class ImageLoaderCurrent implements ImageLoader {
       processINodesUC(in, v, skipBlocks);
 
       if (LayoutVersion.supports(Feature.DELEGATION_TOKEN, imageVersion)) {
-        processDelegationTokens(in, v);
+        //processDelegationTokens(in, v);
       }
       
       v.leaveEnclosingElement(); // FSImage
@@ -290,6 +290,9 @@ class ImageLoaderCurrent implements ImageLoader {
         FSImageSerialization.readString(in);
         FSImageSerialization.readString(in);
         WritableUtils.readEnum(in, AdminStates.class);
+      }
+      if (imageVersion <= -41) {
+        v.visit(ImageElement.BANK_ID, in.readInt());
       }
 
       v.leaveEnclosingElement(); // INodeUnderConstruction
@@ -460,6 +463,11 @@ class ImageLoaderCurrent implements ImageLoader {
     }
 
     processPermission(in, v);
+
+    if ((numBlocks >= 0) && (imageVersion <= -41)) {
+      // Files have a bank ID in later version
+      v.visit(ImageElement.BANK_ID, in.readInt());
+    }
     v.leaveEnclosingElement(); // INode
   }
 
