@@ -55,6 +55,7 @@ message DatanodeIDProto {
   required uint32 xferPort = 4;  // data streaming port
   required uint32 infoPort = 5;  // info server port
   required uint32 ipcPort = 6;   // ipc server port
+  optional int32 bank = 7; // the bank of the datanode
 }
 
 /**

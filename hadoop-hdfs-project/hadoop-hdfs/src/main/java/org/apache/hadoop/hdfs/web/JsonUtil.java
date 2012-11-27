@@ -297,6 +297,7 @@ public class JsonUtil {
     m.put("xceiverCount", datanodeinfo.getXceiverCount());
     m.put("networkLocation", datanodeinfo.getNetworkLocation());
     m.put("adminState", datanodeinfo.getAdminState().name());
+    m.put("bank", datanodeinfo.getBank());
     return m;
   }
 
@@ -305,7 +306,6 @@ public class JsonUtil {
     if (m == null) {
       return null;
     }
-
     return new DatanodeInfo(
         (String)m.get("ipAddr"),
         (String)m.get("hostName"),
@@ -321,7 +321,8 @@ public class JsonUtil {
         (Long)m.get("lastUpdate"),
         (int)(long)(Long)m.get("xceiverCount"),
         (String)m.get("networkLocation"),
-        AdminStates.valueOf((String)m.get("adminState")));
+        AdminStates.valueOf((String)m.get("adminState")),
+        (Integer)m.get("bank"));
   }
 
   /** Convert a DatanodeInfo[] to a Json array. */

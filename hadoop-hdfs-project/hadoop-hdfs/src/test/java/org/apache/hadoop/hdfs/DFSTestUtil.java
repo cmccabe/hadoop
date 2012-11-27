@@ -764,7 +764,7 @@ public class DFSTestUtil {
     return new DatanodeID(ipAddr, "localhost", "",
         DFSConfigKeys.DFS_DATANODE_DEFAULT_PORT,
         DFSConfigKeys.DFS_DATANODE_HTTP_DEFAULT_PORT,
-        DFSConfigKeys.DFS_DATANODE_IPC_DEFAULT_PORT);
+        DFSConfigKeys.DFS_DATANODE_IPC_DEFAULT_PORT, 0);
   }
 
   public static DatanodeID getLocalDatanodeID() {
@@ -773,7 +773,7 @@ public class DFSTestUtil {
 
   public static DatanodeID getLocalDatanodeID(int port) {
     return new DatanodeID("127.0.0.1", "localhost", "",
-        port, port, port);
+        port, port, port, 0);
   }
 
   public static DatanodeDescriptor getLocalDatanodeDescriptor() {
@@ -796,7 +796,7 @@ public class DFSTestUtil {
       String host, int port) {
     return new DatanodeInfo(new DatanodeID(ipAddr, host, "",
         port, DFSConfigKeys.DFS_DATANODE_HTTP_DEFAULT_PORT,
-        DFSConfigKeys.DFS_DATANODE_IPC_DEFAULT_PORT));
+        DFSConfigKeys.DFS_DATANODE_IPC_DEFAULT_PORT, 0));
   }
 
   public static DatanodeInfo getLocalDatanodeInfo(String ipAddr,
@@ -805,7 +805,7 @@ public class DFSTestUtil {
         DFSConfigKeys.DFS_DATANODE_DEFAULT_PORT,
         DFSConfigKeys.DFS_DATANODE_HTTP_DEFAULT_PORT,
         DFSConfigKeys.DFS_DATANODE_IPC_DEFAULT_PORT,
-        1, 2, 3, 4, 5, 6, "local", adminState);
+        1, 2, 3, 4, 5, 6, "local", adminState, 0);
   }
 
   public static DatanodeDescriptor getDatanodeDescriptor(String ipAddr,
@@ -818,7 +818,7 @@ public class DFSTestUtil {
       int port, String rackLocation) {
     DatanodeID dnId = new DatanodeID(ipAddr, "host", "", port,
         DFSConfigKeys.DFS_DATANODE_HTTP_DEFAULT_PORT,
-        DFSConfigKeys.DFS_DATANODE_IPC_DEFAULT_PORT);
+        DFSConfigKeys.DFS_DATANODE_IPC_DEFAULT_PORT, 0);
     return new DatanodeDescriptor(dnId, rackLocation);
   }
   

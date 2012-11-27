@@ -976,7 +976,7 @@ public class DatanodeManager {
       // The IP:port is sufficient for listing in a report
       dnId = new DatanodeID(hostStr, "", "", port,
           DFSConfigKeys.DFS_DATANODE_HTTP_DEFAULT_PORT,
-          DFSConfigKeys.DFS_DATANODE_IPC_DEFAULT_PORT);
+          DFSConfigKeys.DFS_DATANODE_IPC_DEFAULT_PORT, 0);
     } else {
       String ipAddr = "";
       try {
@@ -986,7 +986,7 @@ public class DatanodeManager {
       }
       dnId = new DatanodeID(ipAddr, hostStr, "", port,
           DFSConfigKeys.DFS_DATANODE_HTTP_DEFAULT_PORT,
-          DFSConfigKeys.DFS_DATANODE_IPC_DEFAULT_PORT);
+          DFSConfigKeys.DFS_DATANODE_IPC_DEFAULT_PORT, 0);
     }
     return dnId;
   }

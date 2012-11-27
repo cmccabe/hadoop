@@ -63,6 +63,7 @@ class DNConf {
   final long deleteReportInterval;
   final long initialBlockReportDelay;
   final int writePacketSize;
+  final int bank;
   
   final String minimumNameNodeVersion;
   final String encryptionAlgorithm;
@@ -100,6 +101,8 @@ class DNConf {
     connectToDnViaHostname = conf.getBoolean(
         DFSConfigKeys.DFS_DATANODE_USE_DN_HOSTNAME,
         DFSConfigKeys.DFS_DATANODE_USE_DN_HOSTNAME_DEFAULT);
+    bank = conf.getInt(DFSConfigKeys.DFS_DATANODE_BANK,
+        DFSConfigKeys.DFS_DATANODE_BANK_DEFAULT);
     this.blockReportInterval = conf.getLong(DFS_BLOCKREPORT_INTERVAL_MSEC_KEY,
     DFS_BLOCKREPORT_INTERVAL_MSEC_DEFAULT);
     

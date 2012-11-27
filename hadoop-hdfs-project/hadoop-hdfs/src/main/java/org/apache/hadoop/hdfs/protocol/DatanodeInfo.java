@@ -103,10 +103,10 @@ public class DatanodeInfo extends DatanodeID implements Node {
   public DatanodeInfo(DatanodeID nodeID, String location,
       final long capacity, final long dfsUsed, final long remaining,
       final long blockPoolUsed, final long lastUpdate, final int xceiverCount,
-      final AdminStates adminState) {
+      final AdminStates adminState, int bank) {
     this(nodeID.getIpAddr(), nodeID.getHostName(), nodeID.getStorageID(), nodeID.getXferPort(),
         nodeID.getInfoPort(), nodeID.getIpcPort(), capacity, dfsUsed, remaining,
-        blockPoolUsed, lastUpdate, xceiverCount, location, adminState);
+        blockPoolUsed, lastUpdate, xceiverCount, location, adminState, bank);
   }
 
   /** Constructor */
@@ -114,8 +114,8 @@ public class DatanodeInfo extends DatanodeID implements Node {
       final String storageID, final int xferPort, final int infoPort, final int ipcPort,
       final long capacity, final long dfsUsed, final long remaining,
       final long blockPoolUsed, final long lastUpdate, final int xceiverCount,
-      final String networkLocation, final AdminStates adminState) {
-    super(ipAddr, hostName, storageID, xferPort, infoPort, ipcPort);
+      final String networkLocation, final AdminStates adminState, int bank) {
+    super(ipAddr, hostName, storageID, xferPort, infoPort, ipcPort, bank);
     this.capacity = capacity;
     this.dfsUsed = dfsUsed;
     this.remaining = remaining;

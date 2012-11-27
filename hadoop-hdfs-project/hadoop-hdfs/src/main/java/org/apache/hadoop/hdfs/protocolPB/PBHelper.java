@@ -203,7 +203,8 @@ public class PBHelper {
   // DatanodeId
   public static DatanodeID convert(DatanodeIDProto dn) {
     return new DatanodeID(dn.getIpAddr(), dn.getHostName(), dn.getStorageID(),
-        dn.getXferPort(), dn.getInfoPort(), dn.getIpcPort());
+        dn.getXferPort(), dn.getInfoPort(), dn.getIpcPort(),
+        dn.hasBank() ? dn.getBank() : 0);
   }
 
   public static DatanodeIDProto convert(DatanodeID dn) {
@@ -213,7 +214,8 @@ public class PBHelper {
         .setStorageID(dn.getStorageID())
         .setXferPort(dn.getXferPort())
         .setInfoPort(dn.getInfoPort())
-        .setIpcPort(dn.getIpcPort()).build();
+        .setIpcPort(dn.getIpcPort())
+        .setBank(dn.getBank()).build();
   }
 
   // Arrays of DatanodeId
@@ -450,7 +452,8 @@ public class PBHelper {
         di.hasLocation() ? di.getLocation() : null , 
         di.getCapacity(),  di.getDfsUsed(),  di.getRemaining(),
         di.getBlockPoolUsed()  ,  di.getLastUpdate() , di.getXceiverCount() ,
-        PBHelper.convert(di.getAdminState())); 
+        PBHelper.convert(di.getAdminState()),
+        di.getId().hasBank() ? di.getId().getBank() : 0);
   }
   
   static public DatanodeInfoProto convertDatanodeInfo(DatanodeInfo di) {
