@@ -241,8 +241,9 @@ public abstract class FSEditLogOp {
       return this.bank;
     }
 
-    public void setBank(int bank) {
+    <T extends AddCloseOp> T setBank(int bank) {
       this.bank = bank;
+      return (T)this;
     }
 
     @Override

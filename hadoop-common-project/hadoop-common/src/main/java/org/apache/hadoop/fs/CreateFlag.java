@@ -19,6 +19,7 @@ package org.apache.hadoop.fs;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.AbstractCollection;
 import java.util.EnumSet;
 
 import org.apache.hadoop.HadoopIllegalArgumentException;
@@ -175,7 +176,8 @@ public enum CreateFlag {
     return false;
   }
 
-  public static int flagsToBank(EnumSet<CreateFlag> flag) {
+  public static int flagsToBank(AbstractCollection<CreateFlag> flag) {
+    int bank = 0;
     if (flag.contains(CreateFlag.BANK0))
       return 0;
     if (flag.contains(CreateFlag.BANK1))

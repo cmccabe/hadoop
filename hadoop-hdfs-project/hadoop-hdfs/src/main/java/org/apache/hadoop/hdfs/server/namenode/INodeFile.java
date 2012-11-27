@@ -45,7 +45,7 @@ public class INodeFile extends INode implements BlockCollection {
 
   static final FsPermission UMASK = FsPermission.createImmutable((short)0111);
   // TODO: store in extra bits of atime, ctime?
-  private int bank = 0;
+  private int bank;
 
 
   /** Format: [16 bits for replication][48 bits for PreferredBlockSize] */

@@ -182,6 +182,7 @@ public class ClientNamenodeProtocolTranslatorPB implements
         .setCreateParent(createParent)
         .setReplication(replication)
         .setBlockSize(blockSize)
+        .setBank(CreateFlag.flagsToBank(flag))
         .build();
     try {
       rpcProxy.create(null, req);

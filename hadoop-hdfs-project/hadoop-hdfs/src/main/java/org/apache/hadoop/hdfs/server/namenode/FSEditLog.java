@@ -664,7 +664,8 @@ public class FSEditLog implements LogsPurgeable {
       .setBlocks(newNode.getBlocks())
       .setPermissionStatus(newNode.getPermissionStatus())
       .setClientName(newNode.getClientName())
-      .setClientMachine(newNode.getClientMachine());
+      .setClientMachine(newNode.getClientMachine())
+      .setBank(newNode.getBank());
     
       logEdit(op);
   }
@@ -680,7 +681,8 @@ public class FSEditLog implements LogsPurgeable {
       .setAccessTime(newNode.getAccessTime())
       .setBlockSize(newNode.getPreferredBlockSize())
       .setBlocks(newNode.getBlocks())
-      .setPermissionStatus(newNode.getPermissionStatus());
+      .setPermissionStatus(newNode.getPermissionStatus())
+      .setBank(newNode.getBank());
     
     logEdit(op);
   }
