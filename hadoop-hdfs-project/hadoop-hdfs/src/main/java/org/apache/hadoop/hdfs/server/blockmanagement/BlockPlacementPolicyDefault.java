@@ -108,9 +108,9 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
                                     int numOfReplicas,
                                     DatanodeDescriptor writer,
                                     List<DatanodeDescriptor> chosenNodes,
-                                    long blocksize) {
+                                    long blocksize, int bank) {
     return chooseTarget(numOfReplicas, writer, chosenNodes, false,
-        null, blocksize);
+        null, blocksize, bank);
   }
 
   @Override
@@ -120,9 +120,9 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
                                     List<DatanodeDescriptor> chosenNodes,
                                     boolean returnChosenNodes,
                                     HashMap<Node, Node> excludedNodes,
-                                    long blocksize) {
+                                    long blocksize, int bank) {
     return chooseTarget(numOfReplicas, writer, chosenNodes, returnChosenNodes,
-        excludedNodes, blocksize);
+        excludedNodes, blocksize, bank);
   }
 
   /** This is the implementation. */
@@ -131,7 +131,7 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
                                     List<DatanodeDescriptor> chosenNodes,
                                     boolean returnChosenNodes,
                                     HashMap<Node, Node> excludedNodes,
-                                    long blocksize) {
+                                    long blocksize, int bank) {
     if (numOfReplicas == 0 || clusterMap.getNumOfLeaves()==0) {
       return new DatanodeDescriptor[0];
     }
@@ -164,7 +164,7 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
     boolean avoidStaleNodes = (stats != null
         && stats.isAvoidingStaleDataNodesForWrite());
     DatanodeDescriptor localNode = chooseTarget(numOfReplicas, writer,
-        excludedNodes, blocksize, maxNodesPerRack, results, avoidStaleNodes);
+        excludedNodes, blocksize, maxNodesPerRack, results, avoidStaleNodes, bank);
     if (!returnChosenNodes) {  
       results.removeAll(chosenNodes);
     }
@@ -181,7 +181,7 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
                                           long blocksize,
                                           int maxNodesPerRack,
                                           List<DatanodeDescriptor> results,
-                                          final boolean avoidStaleNodes) {
+                                          final boolean avoidStaleNodes, int bank) {
     if (numOfReplicas == 0 || clusterMap.getNumOfLeaves()==0) {
       return writer;
     }
@@ -243,7 +243,7 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
           oldExcludedNodes.put(node, node);
         }
         return chooseTarget(numOfReplicas, writer, oldExcludedNodes, blocksize,
-            maxNodesPerRack, results, false);
+            maxNodesPerRack, results, false, bank);
       }
     }
     return writer;

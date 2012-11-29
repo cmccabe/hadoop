@@ -166,7 +166,7 @@ public class NamenodeWebHdfsMethods {
       if (clientNode != null) {
         final DatanodeDescriptor[] datanodes = bm.getBlockPlacementPolicy()
             .chooseTarget(path, 1, clientNode,
-                new ArrayList<DatanodeDescriptor>(), false, null, blocksize);
+                new ArrayList<DatanodeDescriptor>(), false, null, blocksize, 0);
         if (datanodes.length > 0) {
           return datanodes[0];
         }

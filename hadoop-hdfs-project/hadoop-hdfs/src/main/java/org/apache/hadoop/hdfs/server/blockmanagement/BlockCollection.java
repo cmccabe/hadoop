@@ -64,4 +64,9 @@ public interface BlockCollection {
    * Get the name of the collection.
    */
   public String getName();
+
+  /**
+   * Get the bank that the collection lives in
+   */
+  public int getBank();
 }

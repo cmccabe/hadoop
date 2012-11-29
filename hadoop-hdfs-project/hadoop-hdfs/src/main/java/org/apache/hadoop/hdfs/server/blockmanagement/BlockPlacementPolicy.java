@@ -61,6 +61,7 @@ public abstract class BlockPlacementPolicy {
    * @param writer the writer's machine, null if not in the cluster.
    * @param chosenNodes datanodes that have been chosen as targets.
    * @param blocksize size of the data to be written.
+   * @param bank the bank to choose the target from
    * @return array of DatanodeDescriptor instances chosen as target 
    * and sorted as a pipeline.
    */
@@ -68,7 +69,7 @@ public abstract class BlockPlacementPolicy {
                                              int numOfReplicas,
                                              DatanodeDescriptor writer,
                                              List<DatanodeDescriptor> chosenNodes,
-                                             long blocksize);
+                                             long blocksize, int bank);
 
   /**
    * choose <i>numOfReplicas</i> data nodes for <i>writer</i> 
@@ -82,6 +83,7 @@ public abstract class BlockPlacementPolicy {
    * @param returnChosenNodes decide if the chosenNodes are returned.
    * @param excludedNodes datanodes that should not be considered as targets.
    * @param blocksize size of the data to be written.
+   * @param bank the bank to choose the target from
    * @return array of DatanodeDescriptor instances chosen as target
    * and sorted as a pipeline.
    */
@@ -91,7 +93,7 @@ public abstract class BlockPlacementPolicy {
                                              List<DatanodeDescriptor> chosenNodes,
                                              boolean returnChosenNodes,
                                              HashMap<Node, Node> excludedNodes,
-                                             long blocksize);
+                                             long blocksize, int bank);
 
   /**
    * choose <i>numOfReplicas</i> data nodes for <i>writer</i>
@@ -106,6 +108,7 @@ public abstract class BlockPlacementPolicy {
    * @param writer the writer's machine, null if not in the cluster.
    * @param chosenNodes datanodes that have been chosen as targets.
    * @param blocksize size of the data to be written.
+   * @param bank the bank to choose the target from
    * @return array of DatanodeDescriptor instances chosen as target 
    * and sorted as a pipeline.
    */
@@ -114,9 +117,9 @@ public abstract class BlockPlacementPolicy {
                                     DatanodeDescriptor writer,
                                     List<DatanodeDescriptor> chosenNodes,
                                     HashMap<Node, Node> excludedNodes,
-                                    long blocksize) {
+                                    long blocksize, int bank) {
     return chooseTarget(srcBC.getName(), numOfReplicas, writer,
-                        chosenNodes, false, excludedNodes, blocksize);
+                        chosenNodes, false, excludedNodes, blocksize, bank);
   }
 
   /**
