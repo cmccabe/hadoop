@@ -66,7 +66,7 @@ public abstract class BlockPlacementPolicy {
                                              int numOfReplicas,
                                              DatanodeDescriptor writer,
                                              List<DatanodeDescriptor> chosenNodes,
-                                             long blocksize);
+                                             long blocksize, int bank);
 
   /**
    * Same as
@@ -78,9 +78,9 @@ public abstract class BlockPlacementPolicy {
                                           DatanodeDescriptor writer,
                                           List<DatanodeDescriptor> chosenNodes,
                                           HashMap<Node, Node> excludedNodes,
-                                          long blocksize) {
+                                          long blocksize, int bank) {
     return chooseTarget(srcPath, numOfReplicas, writer, chosenNodes, false,
-        excludedNodes, blocksize);
+        excludedNodes, blocksize, bank);
   }
 
   /**
@@ -104,7 +104,7 @@ public abstract class BlockPlacementPolicy {
                                              List<DatanodeDescriptor> chosenNodes,
                                              boolean returnChosenNodes,
                                              HashMap<Node, Node> excludedNodes,
-                                             long blocksize);
+                                             long blocksize, int bank);
 
   /**
    * choose <i>numOfReplicas</i> data nodes for <i>writer</i>
@@ -127,9 +127,9 @@ public abstract class BlockPlacementPolicy {
                                     DatanodeDescriptor writer,
                                     List<DatanodeDescriptor> chosenNodes,
                                     HashMap<Node, Node> excludedNodes,
-                                    long blocksize) {
+                                    long blocksize, int bank) {
     return chooseTarget(srcBC.getName(), numOfReplicas, writer,
-                        chosenNodes, excludedNodes, blocksize);
+                        chosenNodes, excludedNodes, blocksize, bank);
   }
 
   /**
@@ -212,10 +212,10 @@ public abstract class BlockPlacementPolicy {
   DatanodeDescriptor[] chooseTarget(String srcPath,
                                     int numOfReplicas,
                                     DatanodeDescriptor writer,
-                                    long blocksize) {
+                                    long blocksize, int bank) {
     return chooseTarget(srcPath, numOfReplicas, writer,
                         new ArrayList<DatanodeDescriptor>(),
-                        blocksize);
+                        blocksize, bank);
   }
 
   /**
@@ -235,11 +235,11 @@ public abstract class BlockPlacementPolicy {
                                     int numOfReplicas,
                                     DatanodeDescriptor writer,
                                     HashMap<Node, Node> excludedNodes,
-                                    long blocksize) {
+                                    long blocksize, int bank) {
     return chooseTarget(srcPath, numOfReplicas, writer,
                         new ArrayList<DatanodeDescriptor>(),
                         excludedNodes,
-                        blocksize);
+                        blocksize, bank);
   }
 
 }

@@ -43,6 +43,7 @@ public class DatanodeID implements Comparable<DatanodeID> {
   protected int xferPort;      // data streaming port
   protected int infoPort;      // info server port
   protected int ipcPort;       // IPC server port
+  private int bank;          // bank
 
   public DatanodeID(DatanodeID from) {
     this(from.getIpAddr(),
@@ -50,7 +51,8 @@ public class DatanodeID implements Comparable<DatanodeID> {
         from.getStorageID(),
         from.getXferPort(),
         from.getInfoPort(),
-        from.getIpcPort());
+        from.getIpcPort(),
+        from.getBank());
   }
   
   /**
@@ -63,13 +65,14 @@ public class DatanodeID implements Comparable<DatanodeID> {
    * @param ipcPort ipc server port
    */
   public DatanodeID(String ipAddr, String hostName, String storageID,
-      int xferPort, int infoPort, int ipcPort) {
+      int xferPort, int infoPort, int ipcPort, int bank) {
     this.ipAddr = ipAddr;
     this.hostName = hostName;
     this.storageID = storageID;
     this.xferPort = xferPort;
     this.infoPort = infoPort;
     this.ipcPort = ipcPort;
+    this.bank = bank;
   }
   
   public void setIpAddr(String ipAddr) {
@@ -173,6 +176,13 @@ public class DatanodeID implements Comparable<DatanodeID> {
     return ipcPort;
   }
 
+  /**
+   * @return bank (the bank of this DN)
+   */
+  public int getBank() {
+    return bank;
+  }
+
   @Override
   public boolean equals(Object to) {
     if (this == to) {
@@ -182,12 +192,13 @@ public class DatanodeID implements Comparable<DatanodeID> {
       return false;
     }
     return (getXferAddr().equals(((DatanodeID)to).getXferAddr()) &&
-            storageID.equals(((DatanodeID)to).getStorageID()));
+            storageID.equals(((DatanodeID)to).getStorageID()) &&
+            (bank == ((DatanodeID)to).getBank()));
   }
   
   @Override
   public int hashCode() {
-    return getXferAddr().hashCode()^ storageID.hashCode();
+    return getXferAddr().hashCode()^ storageID.hashCode() ^ bank;
   }
   
   @Override
@@ -205,6 +216,7 @@ public class DatanodeID implements Comparable<DatanodeID> {
     xferPort = nodeReg.getXferPort();
     infoPort = nodeReg.getInfoPort();
     ipcPort = nodeReg.getIpcPort();
+    bank = nodeReg.getBank();
   }
     
   /**

@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -107,9 +108,9 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
                                     int numOfReplicas,
                                     DatanodeDescriptor writer,
                                     List<DatanodeDescriptor> chosenNodes,
-                                    long blocksize) {
+                                    long blocksize, int bank) {
     return chooseTarget(numOfReplicas, writer, chosenNodes, false,
-        null, blocksize);
+        null, blocksize, bank);
   }
 
   @Override
@@ -119,11 +120,66 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
                                     List<DatanodeDescriptor> chosenNodes,
                                     boolean returnChosenNodes,
                                     HashMap<Node, Node> excludedNodes,
-                                    long blocksize) {
+                                    long blocksize, int bank) {
     return chooseTarget(numOfReplicas, writer, chosenNodes, returnChosenNodes,
-        excludedNodes, blocksize);
+        excludedNodes, blocksize, bank);
   }
 
+  private static void filterNodesByBank(List<DatanodeDescriptor> results, int bank) {
+    // TODO: we should really be using a fallback here, so that if we run 
+    // out of DNs that have our bank, we don't consider it a total failure.
+    Iterator<DatanodeDescriptor> iter = results.iterator();
+    while (iter.hasNext()) {
+      DatanodeDescriptor d = iter.next();
+      if (d.getBank() != bank) iter.remove();
+    }
+  }
+
+  /**
+   * This is just a callback that checks for a DN which has the same hostname as ours, 
+   * but the correct bank.
+   */
+  class RebankingPredicate implements NetworkTopology.Predicate {
+    private DatanodeDescriptor writer;
+    private int bankNeeded;
+    
+    public RebankingPredicate(DatanodeDescriptor writer, int bankNeeded) {
+      this.writer = writer;
+    }
+    
+    @Override
+    public boolean check(Node n) {
+      DatanodeDescriptor dn = (DatanodeDescriptor)n;
+      if (dn.getBank() != bankNeeded) {
+        return false;
+      }
+      if (!dn.getHostName().equals(writer.getHostName())) {
+        return false;
+      }
+      return true;
+    }
+  }
+  
+  /**
+   * We use DatanodeDescriptors to represent the writers, even though 
+   * the writers are DFSClients, not DataNodes at all.  I guess the idea is 
+   * that both have a hostname.
+   * 
+   * When there are two or more DNs on the same hostname, the one we use to 
+   * represent the writer is randomly chosen.  This normally works pretty well, 
+   * since there is almost always one DN per cluster node.  However, in some cases, 
+   * we really do care, since one of the DNs might have a different bank 
+   * than the other.  If we have the DN with the 'wrong' bank for what this writer needs,
+   * we do a full search of the topology to find the correct one.
+   * 
+   * TODO: this is very inefficient.  It might search every DN in the topology.
+   */
+  private DatanodeDescriptor rebankWriter(DatanodeDescriptor writer, int bank) {
+    if (writer == null) return null;
+    if (writer.getBank() == bank) return writer;
+    return (DatanodeDescriptor)clusterMap.searchAll(
+        new RebankingPredicate(writer, bank));
+  }
 
   /** This is the implementation. */
   DatanodeDescriptor[] chooseTarget(int numOfReplicas,
@@ -131,7 +187,9 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
                                     List<DatanodeDescriptor> chosenNodes,
                                     boolean returnChosenNodes,
                                     HashMap<Node, Node> excludedNodes,
-                                    long blocksize) {
+                                    long blocksize, int bank) {
+    //filterNodesByBank(chosenNodes, bank);
+    writer = rebankWriter(writer, bank);
     if (numOfReplicas == 0 || clusterMap.getNumOfLeaves()==0) {
       return new DatanodeDescriptor[0];
     }
@@ -161,7 +219,7 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
     }
       
     DatanodeDescriptor localNode = chooseTarget(numOfReplicas, writer, 
-                                                excludedNodes, blocksize, maxNodesPerRack, results);
+                                                excludedNodes, blocksize, maxNodesPerRack, results, bank);
     if (!returnChosenNodes) {  
       results.removeAll(chosenNodes);
     }
@@ -177,8 +235,9 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
                                           HashMap<Node, Node> excludedNodes,
                                           long blocksize,
                                           int maxNodesPerRack,
-                                          List<DatanodeDescriptor> results) {
-      
+                                          List<DatanodeDescriptor> results, int bank) {
+    //filterNodesByBank(results, bank);
+    writer = rebankWriter(writer, bank);
     if (numOfReplicas == 0 || clusterMap.getNumOfLeaves()==0) {
       return writer;
     }
@@ -193,14 +252,14 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
     try {
       if (numOfResults == 0) {
         writer = chooseLocalNode(writer, excludedNodes, 
-                                 blocksize, maxNodesPerRack, results);
+                                 blocksize, maxNodesPerRack, results, bank);
         if (--numOfReplicas == 0) {
           return writer;
         }
       }
       if (numOfResults <= 1) {
         chooseRemoteRack(1, results.get(0), excludedNodes, 
-                         blocksize, maxNodesPerRack, results);
+                         blocksize, maxNodesPerRack, results, bank);
         if (--numOfReplicas == 0) {
           return writer;
         }
@@ -208,20 +267,20 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
       if (numOfResults <= 2) {
         if (clusterMap.isOnSameRack(results.get(0), results.get(1))) {
           chooseRemoteRack(1, results.get(0), excludedNodes,
-                           blocksize, maxNodesPerRack, results);
+                           blocksize, maxNodesPerRack, results, bank);
         } else if (newBlock){
           chooseLocalRack(results.get(1), excludedNodes, blocksize, 
-                          maxNodesPerRack, results);
+                          maxNodesPerRack, results, bank);
         } else {
           chooseLocalRack(writer, excludedNodes, blocksize,
-                          maxNodesPerRack, results);
+                          maxNodesPerRack, results, bank);
         }
         if (--numOfReplicas == 0) {
           return writer;
         }
       }
       chooseRandom(numOfReplicas, NodeBase.ROOT, excludedNodes, 
-                   blocksize, maxNodesPerRack, results);
+                   blocksize, maxNodesPerRack, results, bank);
     } catch (NotEnoughReplicasException e) {
       LOG.warn("Not able to place enough replicas, still in need of "
                + numOfReplicas + " to reach " + totalReplicasExpected + "\n"
@@ -240,18 +299,18 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
                                              HashMap<Node, Node> excludedNodes,
                                              long blocksize,
                                              int maxNodesPerRack,
-                                             List<DatanodeDescriptor> results)
+                                             List<DatanodeDescriptor> results, int bank)
     throws NotEnoughReplicasException {
     // if no local machine, randomly choose one node
     if (localMachine == null)
       return chooseRandom(NodeBase.ROOT, excludedNodes, 
-                          blocksize, maxNodesPerRack, results);
+                          blocksize, maxNodesPerRack, results, bank);
     if (preferLocalNode) {
       // otherwise try local machine first
       Node oldNode = excludedNodes.put(localMachine, localMachine);
       if (oldNode == null) { // was not in the excluded list
         if (isGoodTarget(localMachine, blocksize,
-                         maxNodesPerRack, false, results)) {
+                         maxNodesPerRack, false, results, bank)) {
           results.add(localMachine);
           return localMachine;
         }
@@ -259,7 +318,7 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
     }      
     // try a node on local rack
     return chooseLocalRack(localMachine, excludedNodes, 
-                           blocksize, maxNodesPerRack, results);
+                           blocksize, maxNodesPerRack, results, bank);
   }
     
   /* choose one node from the rack that <i>localMachine</i> is on.
@@ -274,19 +333,19 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
                                              HashMap<Node, Node> excludedNodes,
                                              long blocksize,
                                              int maxNodesPerRack,
-                                             List<DatanodeDescriptor> results)
+                                             List<DatanodeDescriptor> results, int bank)
     throws NotEnoughReplicasException {
     // no local machine, so choose a random machine
     if (localMachine == null) {
       return chooseRandom(NodeBase.ROOT, excludedNodes, 
-                          blocksize, maxNodesPerRack, results);
+                          blocksize, maxNodesPerRack, results, bank);
     }
       
     // choose one from the local rack
     try {
       return chooseRandom(
                           localMachine.getNetworkLocation(),
-                          excludedNodes, blocksize, maxNodesPerRack, results);
+                          excludedNodes, blocksize, maxNodesPerRack, results, bank);
     } catch (NotEnoughReplicasException e1) {
       // find the second replica
       DatanodeDescriptor newLocal=null;
@@ -302,16 +361,16 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
         try {
           return chooseRandom(
                               newLocal.getNetworkLocation(),
-                              excludedNodes, blocksize, maxNodesPerRack, results);
+                              excludedNodes, blocksize, maxNodesPerRack, results, bank);
         } catch(NotEnoughReplicasException e2) {
           //otherwise randomly choose one from the network
           return chooseRandom(NodeBase.ROOT, excludedNodes,
-                              blocksize, maxNodesPerRack, results);
+                              blocksize, maxNodesPerRack, results, bank);
         }
       } else {
         //otherwise randomly choose one from the network
         return chooseRandom(NodeBase.ROOT, excludedNodes,
-                            blocksize, maxNodesPerRack, results);
+                            blocksize, maxNodesPerRack, results, bank);
       }
     }
   }
@@ -327,17 +386,17 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
                                 HashMap<Node, Node> excludedNodes,
                                 long blocksize,
                                 int maxReplicasPerRack,
-                                List<DatanodeDescriptor> results)
+                                List<DatanodeDescriptor> results, int bank)
     throws NotEnoughReplicasException {
     int oldNumOfReplicas = results.size();
     // randomly choose one node from remote racks
     try {
       chooseRandom(numOfReplicas, "~"+localMachine.getNetworkLocation(),
-                   excludedNodes, blocksize, maxReplicasPerRack, results);
+                   excludedNodes, blocksize, maxReplicasPerRack, results, bank);
     } catch (NotEnoughReplicasException e) {
       chooseRandom(numOfReplicas-(results.size()-oldNumOfReplicas),
                    localMachine.getNetworkLocation(), excludedNodes, blocksize, 
-                   maxReplicasPerRack, results);
+                   maxReplicasPerRack, results, bank);
     }
   }
 
@@ -349,7 +408,7 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
                                           HashMap<Node, Node> excludedNodes,
                                           long blocksize,
                                           int maxNodesPerRack,
-                                          List<DatanodeDescriptor> results) 
+                                          List<DatanodeDescriptor> results, int bank) 
     throws NotEnoughReplicasException {
     int numOfAvailableNodes =
       clusterMap.countNumOfAvailableNodes(nodes, excludedNodes.keySet());
@@ -367,7 +426,7 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
       Node oldNode = excludedNodes.put(chosenNode, chosenNode);
       if (oldNode == null) { // choosendNode was not in the excluded list
         numOfAvailableNodes--;
-        if (isGoodTarget(chosenNode, blocksize, maxNodesPerRack, results)) {
+        if (isGoodTarget(chosenNode, blocksize, maxNodesPerRack, results, bank)) {
           results.add(chosenNode);
           return chosenNode;
         } else {
@@ -393,7 +452,7 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
                             HashMap<Node, Node> excludedNodes,
                             long blocksize,
                             int maxNodesPerRack,
-                            List<DatanodeDescriptor> results)
+                            List<DatanodeDescriptor> results, int bank)
     throws NotEnoughReplicasException {
       
     int numOfAvailableNodes =
@@ -412,7 +471,7 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
       if (oldNode == null) {
         numOfAvailableNodes--;
 
-        if (isGoodTarget(chosenNode, blocksize, maxNodesPerRack, results)) {
+        if (isGoodTarget(chosenNode, blocksize, maxNodesPerRack, results, bank)) {
           numOfReplicas--;
           results.add(chosenNode);
         } else {
@@ -439,15 +498,22 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
    */
   private boolean isGoodTarget(DatanodeDescriptor node,
                                long blockSize, int maxTargetPerLoc,
-                               List<DatanodeDescriptor> results) {
+                               List<DatanodeDescriptor> results, int bank) {
     return isGoodTarget(node, blockSize, maxTargetPerLoc,
-                        this.considerLoad, results);
+                        this.considerLoad, results, bank);
   }
     
   private boolean isGoodTarget(DatanodeDescriptor node,
                                long blockSize, int maxTargetPerLoc,
                                boolean considerLoad,
-                               List<DatanodeDescriptor> results) {
+                               List<DatanodeDescriptor> results, int bank) {
+    if (node.getBank() != bank) {
+      /*LOG.error("WATERMELON: rejecting node " + node + " because its bank is not " + bank + ": " +
+        "node.ipAddr = " + node.getIpAddr() + ", node.hostName = " + node.getHostName() +
+        ", node.storageID = "  + node.getStorageID() + ", node.xferPort = " + node.getXferPort() +
+        ", node.bank = " + node.getBank()); */
+      return false;
+    }
     // check if the node is (being) decommissed
     if (node.isDecommissionInProgress() || node.isDecommissioned()) {
       if(LOG.isDebugEnabled()) {

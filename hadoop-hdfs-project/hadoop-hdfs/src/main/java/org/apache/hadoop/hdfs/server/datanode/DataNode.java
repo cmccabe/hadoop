@@ -702,7 +702,7 @@ public class DataNode extends Configured
     }
     DatanodeID dnId = new DatanodeID(
         streamingAddr.getAddress().getHostAddress(), hostName, 
-        getStorageId(), getXferPort(), getInfoPort(), getIpcPort());
+        getStorageId(), getXferPort(), getInfoPort(), getIpcPort(), dnConf.bank);
     return new DatanodeRegistration(dnId, storageInfo, 
         new ExportedBlockKeys(), VersionInfo.getVersion());
   }

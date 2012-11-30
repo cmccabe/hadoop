@@ -230,7 +230,8 @@ public class FSDirectory implements Closeable {
                 String clientName,
                 String clientMachine,
                 DatanodeDescriptor clientNode,
-                long generationStamp) 
+                long generationStamp,
+                int bank) 
     throws FileAlreadyExistsException, QuotaExceededException,
       UnresolvedLinkException {
     waitForReady();
@@ -251,7 +252,7 @@ public class FSDirectory implements Closeable {
     INodeFileUnderConstruction newNode = new INodeFileUnderConstruction(
                                  permissions,replication,
                                  preferredBlockSize, modTime, clientName, 
-                                 clientMachine, clientNode);
+                                 clientMachine, clientNode, bank);
     writeLock();
     try {
       newNode = addNode(path, newNode, UNKNOWN_DISK_SPACE);
@@ -282,7 +283,7 @@ public class FSDirectory implements Closeable {
                             long preferredBlockSize,
                             boolean underConstruction,
                             String clientName,
-                            String clientMachine)
+                            String clientMachine, int bank)
       throws UnresolvedLinkException {
     INode newNode;
     assert hasWriteLock();
@@ -290,10 +291,10 @@ public class FSDirectory implements Closeable {
       newNode = new INodeFileUnderConstruction(
           permissions, replication,
           preferredBlockSize, modificationTime, clientName, 
-          clientMachine, null);
+          clientMachine, null, bank);
     } else {
       newNode = new INodeFile(permissions, 0, replication,
-                              modificationTime, atime, preferredBlockSize);
+                              modificationTime, atime, preferredBlockSize, bank);
     }
 
     try {

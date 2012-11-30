@@ -24,6 +24,7 @@ import java.util.List;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.fs.ContentSummary;
+import org.apache.hadoop.fs.CreateFlag;
 import org.apache.hadoop.fs.FsServerDefaults;
 import org.apache.hadoop.fs.Options.Rename;
 import org.apache.hadoop.hdfs.protocol.ClientProtocol;
@@ -133,6 +134,7 @@ import org.apache.hadoop.hdfs.protocol.proto.HdfsProtos.DatanodeInfoProto;
 import org.apache.hadoop.hdfs.protocol.proto.HdfsProtos.LocatedBlockProto;
 import org.apache.hadoop.hdfs.security.token.block.DataEncryptionKey;
 import org.apache.hadoop.hdfs.server.common.UpgradeStatusReport;
+import org.apache.hadoop.io.EnumSetWritable;
 import org.apache.hadoop.io.Text;
 
 import com.google.protobuf.RpcController;
@@ -202,8 +204,14 @@ public class ClientNamenodeProtocolServerSideTranslatorPB implements
   public CreateResponseProto create(RpcController controller,
       CreateRequestProto req) throws ServiceException {
     try {
+      EnumSetWritable<CreateFlag> flag = PBHelper.convert(req.getCreateFlag());
+      if (req.hasBank()) {
+        flag.add(CreateFlag.bankToFlag(req.getBank()));
+      } else {
+        flag.add(CreateFlag.bankToFlag(0));
+      }
       server.create(req.getSrc(), PBHelper.convert(req.getMasked()),
-          req.getClientName(), PBHelper.convert(req.getCreateFlag()),
+          req.getClientName(), flag,
           req.getCreateParent(), (short) req.getReplication(),
           req.getBlockSize());
     } catch (IOException e) {

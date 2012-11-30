@@ -619,7 +619,9 @@ class NamenodeJspHelper {
           + "<td align=\"right\" class=\"pcbpused\">"
           + percentBpUsed
           + "<td align=\"right\" class=\"volfails\">"
-          + d.getVolumeFailures() + "\n");
+          + d.getVolumeFailures()
+          + "<td align=\"right\" class=\"bank\">"
+          + d.getBank() + "\n");
     }
 
     void generateNodesList(ServletContext context, JspWriter out,
@@ -714,7 +716,8 @@ class NamenodeJspHelper {
                 + nodeHeaderStr("pcbpused")
                 + "> Block Pool<br>Used (%)"
                 + "> Blocks <th " + nodeHeaderStr("volfails")
-                +"> Failed Volumes\n");
+                + "> Failed Volumes <th " + nodeHeaderStr("bank")
+                + "> Bank \n");
 
             JspHelper.sortNodeList(live, sorterField, sorterOrder);
             for (int i = 0; i < live.size(); i++) {

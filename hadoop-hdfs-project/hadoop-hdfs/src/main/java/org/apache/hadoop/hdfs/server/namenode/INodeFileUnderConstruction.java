@@ -44,9 +44,9 @@ public class INodeFileUnderConstruction extends INodeFile
                              long modTime,
                              String clientName,
                              String clientMachine,
-                             DatanodeDescriptor clientNode) {
+                             DatanodeDescriptor clientNode, int bank) {
     super(permissions.applyUMask(UMASK), 0, replication,
-        modTime, modTime, preferredBlockSize);
+        modTime, modTime, preferredBlockSize, bank);
     this.clientName = clientName;
     this.clientMachine = clientMachine;
     this.clientNode = clientNode;
@@ -60,9 +60,10 @@ public class INodeFileUnderConstruction extends INodeFile
                              PermissionStatus perm,
                              String clientName,
                              String clientMachine,
-                             DatanodeDescriptor clientNode) {
+                             DatanodeDescriptor clientNode,
+                             int bank) {
     super(perm, blocks, blockReplication, modificationTime, modificationTime,
-          preferredBlockSize);
+          preferredBlockSize, bank);
     setLocalName(name);
     this.clientName = clientName;
     this.clientMachine = clientMachine;
@@ -106,9 +107,9 @@ public class INodeFileUnderConstruction extends INodeFile
                                   getReplication(),
                                   getModificationTime(),
                                   getModificationTime(),
-                                  getPreferredBlockSize());
+                                  getPreferredBlockSize(),
+                                  getBank());
     return obj;
-    
   }
   
   /**

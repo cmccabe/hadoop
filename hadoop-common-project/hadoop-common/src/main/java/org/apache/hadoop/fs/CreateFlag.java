@@ -19,6 +19,7 @@ package org.apache.hadoop.fs;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.AbstractCollection;
 import java.util.EnumSet;
 
 import org.apache.hadoop.HadoopIllegalArgumentException;
@@ -79,7 +80,20 @@ public enum CreateFlag {
   /**
    * Force closed blocks to disk. Similar to POSIX O_SYNC. See javadoc for description.
    */
-  SYNC_BLOCK((short) 0x08);
+  SYNC_BLOCK((short) 0x08),
+
+  // TODO: add a new function to FileSystem rather than overloading these
+  // flags, probably.
+  BANK0((short) 0x10),
+  BANK1((short) 0x11),
+  BANK2((short) 0x12),
+  BANK3((short) 0x13),
+  BANK4((short) 0x14),
+  BANK5((short) 0x15),
+  BANK6((short) 0x16),
+  BANK7((short) 0x17),
+  BANK8((short) 0x18),
+  BANK9((short) 0x19);
 
   private final short mode;
 
@@ -133,6 +147,84 @@ public enum CreateFlag {
     } else if (!flag.contains(CREATE)) {
       throw new FileNotFoundException("Non existing file: " + path.toString()
           + ". Create option is not specified in " + flag);
+    }
+  }
+
+  public final static int DEFAULT_BANK = 0;
+  
+  public static boolean flagsContainsBank(EnumSet<CreateFlag> flag) {
+    if (flag.contains(CreateFlag.BANK0))
+      return true;
+    if (flag.contains(CreateFlag.BANK1))
+      return true;
+    if (flag.contains(CreateFlag.BANK2))
+      return true;
+    if (flag.contains(CreateFlag.BANK3))
+      return true;
+    if (flag.contains(CreateFlag.BANK4))
+      return true;
+    if (flag.contains(CreateFlag.BANK5))
+      return true;
+    if (flag.contains(CreateFlag.BANK6))
+      return true;
+    if (flag.contains(CreateFlag.BANK7))
+      return true;
+    if (flag.contains(CreateFlag.BANK8))
+      return true;
+    if (flag.contains(CreateFlag.BANK9))
+      return true;
+    return false;
+  }
+
+  public static int flagsToBank(AbstractCollection<CreateFlag> flag) {
+    int bank = 0;
+    if (flag.contains(CreateFlag.BANK0))
+      return 0;
+    if (flag.contains(CreateFlag.BANK1))
+      return 1;
+    if (flag.contains(CreateFlag.BANK2))
+      return 2;
+    if (flag.contains(CreateFlag.BANK3))
+      return 3;
+    if (flag.contains(CreateFlag.BANK4))
+      return 4;
+    if (flag.contains(CreateFlag.BANK5))
+      return 5;
+    if (flag.contains(CreateFlag.BANK6))
+      return 6;
+    if (flag.contains(CreateFlag.BANK7))
+      return 7;
+    if (flag.contains(CreateFlag.BANK8))
+      return 8;
+    if (flag.contains(CreateFlag.BANK9))
+      return 9;
+    return DEFAULT_BANK;
+  }
+
+  public static CreateFlag bankToFlag(int bank) {
+    switch (bank) {
+      case 0:
+        return CreateFlag.BANK0;
+      case 1:
+        return CreateFlag.BANK1;
+      case 2:
+        return CreateFlag.BANK2;
+      case 3:
+        return CreateFlag.BANK3;
+      case 4:
+        return CreateFlag.BANK4;
+      case 5:
+        return CreateFlag.BANK5;
+      case 6:
+        return CreateFlag.BANK6;
+      case 7:
+        return CreateFlag.BANK7;
+      case 8:
+        return CreateFlag.BANK8;
+      case 9:
+        return CreateFlag.BANK9;
+      default:
+        throw new RuntimeException("invalid bank " + bank);
     }
   }
 }

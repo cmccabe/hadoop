@@ -47,6 +47,8 @@ import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_CLIENT_WRITE_PACKET_SIZE_
 import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_DATANODE_SOCKET_WRITE_TIMEOUT_KEY;
 import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_REPLICATION_DEFAULT;
 import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_REPLICATION_KEY;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_BANK_DEFAULT;
+import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_BANK_KEY;
 import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_CLIENT_USE_DN_HOSTNAME;
 import static org.apache.hadoop.hdfs.DFSConfigKeys.DFS_CLIENT_USE_DN_HOSTNAME_DEFAULT;
 
@@ -218,6 +220,7 @@ public class DFSClient implements java.io.Closeable {
     final long defaultBlockSize;
     final long prefetchSize;
     final short defaultReplication;
+    final int defaultBank;
     final String taskId;
     final FsPermission uMask;
     final boolean useLegacyBlockReader;
@@ -257,6 +260,7 @@ public class DFSClient implements java.io.Closeable {
           DFS_BLOCK_SIZE_DEFAULT);
       defaultReplication = (short) conf.getInt(
           DFS_REPLICATION_KEY, DFS_REPLICATION_DEFAULT);
+      defaultBank = conf.getInt(DFS_BANK_KEY, DFS_BANK_DEFAULT);
       taskId = conf.get("mapreduce.task.attempt.id", "NONMAPREDUCE");
       socketCacheCapacity = conf.getInt(DFS_CLIENT_SOCKET_CACHE_CAPACITY_KEY,
           DFS_CLIENT_SOCKET_CACHE_CAPACITY_DEFAULT);
@@ -913,6 +917,10 @@ public class DFSClient implements java.io.Closeable {
     return dfsClientConf.defaultReplication;
   }
   
+  public int getDefaultBank() {
+    return dfsClientConf.defaultBank;
+  }
+  
   /*
    * This is just a wrapper around callGetBlockLocations, but non-static so that
    * we can stub it out for tests.
@@ -1211,6 +1219,9 @@ public class DFSClient implements java.io.Closeable {
     FsPermission masked = permission.applyUMask(dfsClientConf.uMask);
     if(LOG.isDebugEnabled()) {
       LOG.debug(src + ": masked=" + masked);
+    }
+    if (!CreateFlag.flagsContainsBank(flag)) {
+      flag.add(CreateFlag.bankToFlag(dfsClientConf.defaultBank));
     }
     final DFSOutputStream result = DFSOutputStream.newStreamForCreate(this,
         src, masked, flag, createParent, replication, blockSize, progress,

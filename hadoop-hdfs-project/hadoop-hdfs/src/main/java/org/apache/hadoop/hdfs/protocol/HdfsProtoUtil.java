@@ -94,13 +94,18 @@ public abstract class HdfsProtoUtil {
   }
   
   private static DatanodeID fromProto(HdfsProtos.DatanodeIDProto idProto) {
+    int bank = 0;
+    if (idProto.hasBank()) {
+      bank = idProto.getBank();
+    }
     return new DatanodeID(
         idProto.getIpAddr(),
         idProto.getHostName(),
         idProto.getStorageID(),
         idProto.getXferPort(),
         idProto.getInfoPort(),
-        idProto.getIpcPort());
+        idProto.getIpcPort(),
+        bank);
   }
   
   //// DatanodeInfo ////

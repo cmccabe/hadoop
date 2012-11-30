@@ -551,6 +551,27 @@ public class NetworkTopology {
     }
   }
     
+  public static interface Predicate {
+    public boolean check(Node n);
+  }
+  
+  private static Node searchAllImpl(Node cur, Predicate pred) {
+    if (cur instanceof InnerNode) {
+      InnerNode iCur = (InnerNode)cur;
+      for (Node child : iCur.getChildren()) {
+        Node ret = searchAllImpl(child, pred);
+        if (ret != null) return ret;
+      }
+      return null;
+    } else {
+      return pred.check(cur) ? cur : null;
+    }
+  }
+  
+  public Node searchAll(Predicate pred) {
+    return searchAllImpl(clusterMap, pred);
+  }
+  
   private Node chooseRandom(String scope, String excludedScope){
     if (excludedScope != null) {
       if (scope.startsWith(excludedScope)) {

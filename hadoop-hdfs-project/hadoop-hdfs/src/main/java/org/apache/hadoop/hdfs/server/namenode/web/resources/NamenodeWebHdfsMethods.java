@@ -164,7 +164,7 @@ public class NamenodeWebHdfsMethods {
           ).getDatanodeByHost(getRemoteAddress());
       if (clientNode != null) {
         final DatanodeDescriptor[] datanodes = bm.getBlockPlacementPolicy(
-            ).chooseTarget(path, 1, clientNode, null, blocksize);
+            ).chooseTarget(path, 1, clientNode, null, blocksize, 0);
         if (datanodes.length > 0) {
           return datanodes[0];
         }

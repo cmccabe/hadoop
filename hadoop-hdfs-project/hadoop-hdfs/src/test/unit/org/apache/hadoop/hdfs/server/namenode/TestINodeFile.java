@@ -46,7 +46,7 @@ public class TestINodeFile {
     preferredBlockSize = 128*1024*1024;
     INodeFile inf = new INodeFile(new PermissionStatus(userName, null, 
                                   FsPermission.getDefault()), null, replication,
-                                  0L, 0L, preferredBlockSize);
+                                  0L, 0L, preferredBlockSize, 0);
     assertEquals("True has to be returned in this case", replication,
                  inf.getReplication());
   }
@@ -63,7 +63,7 @@ public class TestINodeFile {
     preferredBlockSize = 128*1024*1024;
     INodeFile inf = new INodeFile(new PermissionStatus(userName, null,
                                   FsPermission.getDefault()), null, replication,
-                                  0L, 0L, preferredBlockSize);
+                                  0L, 0L, preferredBlockSize, 0);
   }
 
   /**
@@ -76,7 +76,7 @@ public class TestINodeFile {
     preferredBlockSize = 128*1024*1024;
     INodeFile inf = new INodeFile(new PermissionStatus(userName, null,
                                   FsPermission.getDefault()), null, replication,
-                                  0L, 0L, preferredBlockSize);
+                                  0L, 0L, preferredBlockSize, 0);
     assertEquals("True has to be returned in this case", preferredBlockSize,
            inf.getPreferredBlockSize());
   }
@@ -87,7 +87,7 @@ public class TestINodeFile {
     preferredBlockSize = BLKSIZE_MAXVALUE;
     INodeFile inf = new INodeFile(new PermissionStatus(userName, null, 
                                   FsPermission.getDefault()), null, replication,
-                                  0L, 0L, preferredBlockSize);
+                                  0L, 0L, preferredBlockSize, 0);
     assertEquals("True has to be returned in this case", BLKSIZE_MAXVALUE,
                  inf.getPreferredBlockSize());
   }
@@ -104,7 +104,7 @@ public class TestINodeFile {
     preferredBlockSize = -1;
     INodeFile inf = new INodeFile(new PermissionStatus(userName, null, 
                                   FsPermission.getDefault()), null, replication,
-                                  0L, 0L, preferredBlockSize);
+                                  0L, 0L, preferredBlockSize, 0);
   } 
 
   /**
@@ -119,7 +119,7 @@ public class TestINodeFile {
     preferredBlockSize = BLKSIZE_MAXVALUE+1;
     INodeFile inf = new INodeFile(new PermissionStatus(userName, null, 
                                   FsPermission.getDefault()), null, replication,
-                                  0L, 0L, preferredBlockSize);
+                                  0L, 0L, preferredBlockSize, 0);
   }
 
   @Test
@@ -130,7 +130,7 @@ public class TestINodeFile {
     replication = 3;
     preferredBlockSize = 128*1024*1024;
     INodeFile inf = new INodeFile(perms, null, replication,
-                                  0L, 0L, preferredBlockSize);
+                                  0L, 0L, preferredBlockSize, 0);
     inf.setLocalName("f");
 
     INodeDirectory root = new INodeDirectory(INodeDirectory.ROOT_NAME, perms);
@@ -195,7 +195,7 @@ public class TestINodeFile {
       PermissionStatus perms = new PermissionStatus(userName, null,
           FsPermission.getDefault());
       iNodes[i] = new INodeFile(perms, null, replication, 0L, 0L,
-          preferredBlockSize);
+          preferredBlockSize, 0);
       iNodes[i].setLocalName(fileNamePrefix +  Integer.toString(i));
       BlockInfo newblock = new BlockInfo(replication);
       iNodes[i].addBlock(newblock);

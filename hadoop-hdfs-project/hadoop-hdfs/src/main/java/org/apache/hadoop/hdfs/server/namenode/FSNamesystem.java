@@ -1808,7 +1808,8 @@ public class FSNamesystem implements Namesystem, FSClusterStats,
         // increment global generation stamp
         long genstamp = nextGenerationStamp();
         INodeFileUnderConstruction newNode = dir.addFile(src, permissions,
-            replication, blockSize, holder, clientMachine, clientNode, genstamp);
+            replication, blockSize, holder, clientMachine, clientNode, genstamp,
+            CreateFlag.flagsToBank(flag));
         if (newNode == null) {
           throw new IOException("DIR* NameSystem.startFile: " +
                                 "Unable to add file to namespace.");
@@ -1821,6 +1822,7 @@ public class FSNamesystem implements Namesystem, FSClusterStats,
           NameNode.stateChangeLog.debug("DIR* NameSystem.startFile: "
                                      +"add "+src+" to namespace for "+holder);
         }
+        //LOG.error("WATERMELON: startFileInternal(src=" + src + ", bank=" + CreateFlag.flagsToBank(flag) + ")");
       }
     } catch (IOException ie) {
       NameNode.stateChangeLog.warn("DIR* NameSystem.startFile: "
@@ -1858,7 +1860,7 @@ public class FSNamesystem implements Namesystem, FSClusterStats,
                                     node.getPermissionStatus(),
                                     leaseHolder,
                                     clientMachine,
-                                    clientNode);
+                                    clientNode, node.getBank());
     dir.replaceNode(src, node, cons);
     leaseManager.addLease(cons.getClientName(), src);
     
@@ -2075,7 +2077,7 @@ public class FSNamesystem implements Namesystem, FSClusterStats,
     checkBlock(previous);
     Block previousBlock = ExtendedBlock.getLocalBlock(previous);
     long fileLength, blockSize;
-    int replication;
+    int replication, bank = 0;
     DatanodeDescriptor clientNode = null;
     Block newBlock = null;
 
@@ -2097,6 +2099,7 @@ public class FSNamesystem implements Namesystem, FSClusterStats,
       checkFsObjectLimit();
 
       INodeFileUnderConstruction pendingFile = checkLease(src, clientName);
+      bank = pendingFile.getBank();
       BlockInfo lastBlockInFile = pendingFile.getLastBlock();
       if (!Block.matchingIdAndGenStamp(previousBlock, lastBlockInFile)) {
         // The block that the client claims is the current last block
@@ -2172,7 +2175,7 @@ public class FSNamesystem implements Namesystem, FSClusterStats,
 
     // choose targets for the new block to be allocated.
     final DatanodeDescriptor targets[] = blockManager.chooseTarget(
-        src, replication, clientNode, excludedNodes, blockSize);
+        src, replication, clientNode, excludedNodes, blockSize, bank);
 
     // Allocate a new block and record it in the INode. 
     writeLock();
@@ -2223,6 +2226,7 @@ public class FSNamesystem implements Namesystem, FSClusterStats,
     final long preferredblocksize;
     final List<DatanodeDescriptor> chosen;
     readLock();
+    int bank = 0;
     try {
       checkOperation(OperationCategory.WRITE);
       //check safe mode
@@ -2235,6 +2239,7 @@ public class FSNamesystem implements Namesystem, FSClusterStats,
       final INodeFileUnderConstruction file = checkLease(src, clientName);
       clientnode = file.getClientNode();
       preferredblocksize = file.getPreferredBlockSize();
+      bank = file.getBank();
 
       //find datanode descriptors
       chosen = new ArrayList<DatanodeDescriptor>();
@@ -2252,7 +2257,7 @@ public class FSNamesystem implements Namesystem, FSClusterStats,
     // choose new datanodes.
     final DatanodeInfo[] targets = blockManager.getBlockPlacementPolicy(
         ).chooseTarget(src, numAdditionalNodes, clientnode, chosen, true,
-        excludes, preferredblocksize);
+        excludes, preferredblocksize, bank);
     final LocatedBlock lb = new LocatedBlock(blk, targets);
     blockManager.setBlockToken(lb, AccessMode.COPY);
     return lb;

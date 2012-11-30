@@ -1198,7 +1198,7 @@ public class BlockManager {
       // so for now we pass in the block collection itself.
       rw.targets = blockplacement.chooseTarget(rw.bc,
           rw.additionalReplRequired, rw.srcNode, rw.liveReplicaNodes,
-          excludedNodes, rw.block.getNumBytes());
+          excludedNodes, rw.block.getNumBytes(), rw.bc.getBank());
     }
 
     namesystem.writeLock();
@@ -1317,10 +1317,10 @@ public class BlockManager {
   public DatanodeDescriptor[] chooseTarget(final String src,
       final int numOfReplicas, final DatanodeDescriptor client,
       final HashMap<Node, Node> excludedNodes,
-      final long blocksize) throws IOException {
+      final long blocksize, int bank) throws IOException {
     // choose targets for the new block to be allocated.
     final DatanodeDescriptor targets[] = blockplacement.chooseTarget(
-        src, numOfReplicas, client, excludedNodes, blocksize);
+        src, numOfReplicas, client, excludedNodes, blocksize, bank);
     if (targets.length < minReplication) {
       throw new IOException("File " + src + " could only be replicated to "
           + targets.length + " nodes instead of minReplication (="

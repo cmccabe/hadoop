@@ -835,7 +835,7 @@ public class NNThroughputBenchmark {
               DNS.getDefaultHost("default", "default"),
               "", getNodePort(dnIdx),
               DFSConfigKeys.DFS_DATANODE_HTTP_DEFAULT_PORT,
-              DFSConfigKeys.DFS_DATANODE_IPC_DEFAULT_PORT),
+              DFSConfigKeys.DFS_DATANODE_IPC_DEFAULT_PORT, 0),
           new DataStorage(nsInfo, ""),
           new ExportedBlockKeys(), VersionInfo.getVersion());
       DataNode.setNewStorageID(dnRegistration);

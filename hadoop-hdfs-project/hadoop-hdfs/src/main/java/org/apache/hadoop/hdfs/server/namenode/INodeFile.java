@@ -33,6 +33,8 @@ import org.apache.hadoop.hdfs.server.blockmanagement.BlockCollection;
 @InterfaceAudience.Private
 public class INodeFile extends INode implements BlockCollection {
   static final FsPermission UMASK = FsPermission.createImmutable((short)0111);
+  // TODO: store in extra bits of atime, ctime?
+  private int bank;
 
   //Number of bits for Block size
   static final short BLOCKBITS = 48;
@@ -47,18 +49,23 @@ public class INodeFile extends INode implements BlockCollection {
 
   INodeFile(PermissionStatus permissions,
             int nrBlocks, short replication, long modificationTime,
-            long atime, long preferredBlockSize) {
+            long atime, long preferredBlockSize, int bank) {
     this(permissions, new BlockInfo[nrBlocks], replication,
-        modificationTime, atime, preferredBlockSize);
+        modificationTime, atime, preferredBlockSize, bank);
   }
 
   INodeFile(PermissionStatus permissions, BlockInfo[] blklist,
                       short replication, long modificationTime,
-                      long atime, long preferredBlockSize) {
+                      long atime, long preferredBlockSize, int bank) {
     super(permissions, modificationTime, atime);
     this.setReplication(replication);
     this.setPreferredBlockSize(preferredBlockSize);
     blocks = blklist;
+    this.bank = bank;
+  }
+
+  public int getBank() {
+    return bank;
   }
 
   /**

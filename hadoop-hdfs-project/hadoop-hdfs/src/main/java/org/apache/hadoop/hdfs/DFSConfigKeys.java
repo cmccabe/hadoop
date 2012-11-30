@@ -34,6 +34,8 @@ public class DFSConfigKeys extends CommonConfigurationKeys {
   public static final long    DFS_BLOCK_SIZE_DEFAULT = 64*1024*1024;
   public static final String  DFS_REPLICATION_KEY = "dfs.replication";
   public static final short   DFS_REPLICATION_DEFAULT = 3;
+  public static final String  DFS_BANK_KEY = "dfs.bank.default";
+  public static final short   DFS_BANK_DEFAULT = 0;
   public static final String  DFS_STREAM_BUFFER_SIZE_KEY = "dfs.stream-buffer-size";
   public static final int     DFS_STREAM_BUFFER_SIZE_DEFAULT = 4096;
   public static final String  DFS_BYTES_PER_CHECKSUM_KEY = "dfs.bytes-per-checksum";
@@ -91,6 +93,8 @@ public class DFSConfigKeys extends CommonConfigurationKeys {
   public static final boolean DFS_DATANODE_DROP_CACHE_BEHIND_READS_DEFAULT = false;
   public static final String  DFS_DATANODE_USE_DN_HOSTNAME = "dfs.datanode.use.datanode.hostname";
   public static final boolean DFS_DATANODE_USE_DN_HOSTNAME_DEFAULT = false;
+  public static final String DFS_DATANODE_BANK = "dfs.datanode.bank";
+  public static final int DFS_DATANODE_BANK_DEFAULT = 0;
 
   public static final String  DFS_NAMENODE_HTTP_PORT_KEY = "dfs.http.port";
   public static final int     DFS_NAMENODE_HTTP_PORT_DEFAULT = 50070;

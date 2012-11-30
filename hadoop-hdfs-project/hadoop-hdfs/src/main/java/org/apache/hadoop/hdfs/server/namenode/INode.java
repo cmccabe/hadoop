@@ -437,6 +437,7 @@ abstract class INode implements Comparable<byte[]> {
    * @param nsQuota namespace quota
    * @param dsQuota disk quota
    * @param preferredBlockSize block size
+   * @param bank if a file
    * @return an inode
    */
   static INode newINode(PermissionStatus permissions,
@@ -447,7 +448,8 @@ abstract class INode implements Comparable<byte[]> {
                         long atime,
                         long nsQuota,
                         long dsQuota,
-                        long preferredBlockSize) {
+                        long preferredBlockSize,
+                        int bank) {
     if (symlink.length() != 0) { // check if symbolic link
       return new INodeSymlink(symlink, modificationTime, atime, permissions);
     }  else if (blocks == null) { //not sym link and blocks null? directory!
@@ -460,6 +462,6 @@ abstract class INode implements Comparable<byte[]> {
     }
     // file
     return new INodeFile(permissions, blocks, replication,
-        modificationTime, atime, preferredBlockSize);
+        modificationTime, atime, preferredBlockSize, bank);
   }
 }

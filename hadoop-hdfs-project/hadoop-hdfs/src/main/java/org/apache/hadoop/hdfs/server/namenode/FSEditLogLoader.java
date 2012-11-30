@@ -257,13 +257,13 @@ public class FSEditLogLoader {
         final short replication  = fsNamesys.getBlockManager(
             ).adjustReplication(addCloseOp.replication);
         assert addCloseOp.blocks.length == 0;
-
         // add to the file tree
         newFile = (INodeFile)fsDir.unprotectedAddFile(
             addCloseOp.path, addCloseOp.permissions,
             replication, addCloseOp.mtime,
             addCloseOp.atime, addCloseOp.blockSize,
-            true, addCloseOp.clientName, addCloseOp.clientMachine);
+            true, addCloseOp.clientName, addCloseOp.clientMachine,
+            addCloseOp.bank);
         fsNamesys.leaseManager.addLease(addCloseOp.clientName, addCloseOp.path);
 
       } else { // This is OP_ADD on an existing file
