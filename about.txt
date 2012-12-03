@@ -1,0 +1,46 @@
+hierarchical storage management in HDFS
+===============================================================================
+WHY?
+* flash is coming.
+* users want to use HDFS as an archive
+
+but HDFS curruently only has one knob to control storage: replication.
+You can turn the knob up, or down.
+Most likely, snapshots will freeze the replication knob in whatever position it was.
+(this is still under discussion)
+
+You cannot choose to place some data on flash and some on disk.
+
+APPLICATIONS
+* put HBase write-ahead log on flash, put rest of HBase data on disk
+* put all of HBase data on flash, but keep MR data on hard disk
+* put frequently used data (for MR/Impala/Hive) on flash, but put infrequently used data on disk.
+
+APPROACH
+* set up the concept of 'banks'
+* each datanode gets exactly one 'bank'.
+* files in a given bank can only be stored on the relevant set of datanodes
+* store bank in each INode and INodeUnderConstruction, etc. 
+
+FUTURE WORK
+* have datanodes store multiple banks, rather than a DN per bank.
+    * running multiple DNs has a higher overhead -- must have multiple java heaps, etc.
+* implement gzip bank
+* augment the rebalancer to move files between banks
+    * based on atime?
+    * based on sysadmin-configurable policies?
+    * set up reasonable defaults
+
+FINAL CONSIDERATIONS
+alternative approaches
+    * in-kernel caching strategies
+        * bcache
+        * flashcache
+        * upsides: no code change needed in HDFS
+        * downsides: these new kernels will take a long time to be deployed in RHEL versions that our customers actually use
+        * no selective caching: you're stuck with LRU, which may not always be that useful.
+    * spark/shark/mesos?
+
+HDFS needs more work to fully utilize flash.
+    * See Dhruba's Facebook post about performance bottlenecks in HDFS/HBase.
+        when the I/O bottleneck is lifted, we have to start working on CPU bottlenecks.
