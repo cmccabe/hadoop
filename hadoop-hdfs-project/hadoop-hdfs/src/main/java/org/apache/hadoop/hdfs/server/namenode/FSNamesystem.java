@@ -1793,8 +1793,9 @@ public class FSNamesystem implements Namesystem, FSClusterStats,
         }
       }
 
+      int bank = CreateFlag.flagsToBank(flag);
       final DatanodeDescriptor clientNode = 
-          blockManager.getDatanodeManager().getDatanodeByHost(clientMachine);
+          blockManager.getDatanodeManager().getDatanodeByHostAndBank(clientMachine, bank);
 
       if (append && myFile != null) {
         return prepareFileForWrite(
@@ -1808,8 +1809,7 @@ public class FSNamesystem implements Namesystem, FSClusterStats,
         // increment global generation stamp
         long genstamp = nextGenerationStamp();
         INodeFileUnderConstruction newNode = dir.addFile(src, permissions,
-            replication, blockSize, holder, clientMachine, clientNode, genstamp,
-            CreateFlag.flagsToBank(flag));
+            replication, blockSize, holder, clientMachine, clientNode, genstamp, bank);
         if (newNode == null) {
           throw new IOException("DIR* NameSystem.startFile: " +
                                 "Unable to add file to namespace.");

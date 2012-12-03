@@ -219,6 +219,10 @@ public class DatanodeID implements Comparable<DatanodeID> {
     bank = nodeReg.getBank();
   }
     
+  public String getCompareString() {
+    return ipAddr + ":" + infoPort + "[" + bank + "]";
+  }
+  
   /**
    * Compare based on data transfer address.
    *
@@ -227,6 +231,6 @@ public class DatanodeID implements Comparable<DatanodeID> {
    */
   @Override
   public int compareTo(DatanodeID that) {
-    return getXferAddr().compareTo(that.getXferAddr());
+    return getCompareString().compareTo(that.getCompareString());
   }
 }

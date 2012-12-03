@@ -233,6 +233,10 @@ public class DatanodeManager {
     return host2DatanodeMap.getDatanodeByHost(host);
   }
 
+  public DatanodeDescriptor getDatanodeByHostAndBank(final String host, int bank) {
+    return host2DatanodeMap.getDatanodeByHostAndBank(host, bank);
+  }
+
   /** Get a datanode descriptor given corresponding storageID */
   DatanodeDescriptor getDatanode(final String storageID) {
     return datanodeMap.get(storageID);
@@ -575,11 +579,12 @@ public class DatanodeManager {
         + " storage " + nodeReg.getStorageID());
 
     DatanodeDescriptor nodeS = datanodeMap.get(nodeReg.getStorageID());
-    DatanodeDescriptor nodeN = getDatanodeByHost(nodeReg.getXferAddr());
+    DatanodeDescriptor nodeN = getDatanodeByHostAndBank(nodeReg.getXferAddr(), nodeReg.getBank());
       
     if (nodeN != null && nodeN != nodeS) {
       NameNode.LOG.info("BLOCK* NameSystem.registerDatanode: "
                         + "node from name: " + nodeN);
+      NameNode.LOG.info("WATERMELON: confusion between " + nodeN + " and " + nodeS);
       // nodeN previously served a different data storage, 
       // which is not served by anybody anymore.
       removeDatanode(nodeN);

@@ -177,8 +177,17 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
   private DatanodeDescriptor rebankWriter(DatanodeDescriptor writer, int bank) {
     if (writer == null) return null;
     if (writer.getBank() == bank) return writer;
-    return (DatanodeDescriptor)clusterMap.searchAll(
+    int oldBank = writer.getBank();
+    DatanodeDescriptor ret = (DatanodeDescriptor)clusterMap.searchAll(
         new RebankingPredicate(writer, bank));
+    if (ret != null) {
+      LOG.error("rebankWriter: have bank " + oldBank + ", wanted bank " + bank +
+          "... but failed to find a suitable node");
+    } else {
+      LOG.error("rebankWriter: have bank " + oldBank + ", found new node with bank " + bank +
+          ": " + datanodeDescriptorToStr(writer));
+    }
+    return ret;
   }
 
   /** This is the implementation. */
@@ -503,15 +512,19 @@ public class BlockPlacementPolicyDefault extends BlockPlacementPolicy {
                         this.considerLoad, results, bank);
   }
     
+  private static String datanodeDescriptorToStr(DatanodeDescriptor node) {
+    return "node{ipAddr=" + node.getIpAddr() + ", hostName=" + node.getHostName() +
+        ", storageID="  + node.getStorageID() + ", xferPort=" + node.getXferPort() +
+        ", bank=" + node.getBank() + "}";
+  }
+  
   private boolean isGoodTarget(DatanodeDescriptor node,
                                long blockSize, int maxTargetPerLoc,
                                boolean considerLoad,
                                List<DatanodeDescriptor> results, int bank) {
     if (node.getBank() != bank) {
-      /*LOG.error("WATERMELON: rejecting node " + node + " because its bank is not " + bank + ": " +
-        "node.ipAddr = " + node.getIpAddr() + ", node.hostName = " + node.getHostName() +
-        ", node.storageID = "  + node.getStorageID() + ", node.xferPort = " + node.getXferPort() +
-        ", node.bank = " + node.getBank()); */
+      LOG.error("WATERMELON: rejecting node " + datanodeDescriptorToStr(node) +
+          " because its bank is not " + bank);
       return false;
     }
     // check if the node is (being) decommissed

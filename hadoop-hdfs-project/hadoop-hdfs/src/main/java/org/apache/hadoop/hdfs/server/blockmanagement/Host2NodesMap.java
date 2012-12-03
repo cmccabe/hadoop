@@ -19,6 +19,7 @@ package org.apache.hadoop.hdfs.server.blockmanagement;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -154,6 +155,38 @@ class Host2NodesMap {
       }
       // more than one node
       return nodes[DFSUtil.getRandom().nextInt(nodes.length)];
+    } finally {
+      hostmapLock.readLock().unlock();
+    }
+  }
+
+  /**
+   * Get a data node by its IP address and bank.
+   * @return DatanodeDescriptor if found, null otherwise 
+   */
+  DatanodeDescriptor getDatanodeByHostAndBank(String ipAddr, int bank) {
+    if (ipAddr == null) {
+      return null;
+    }
+      
+    hostmapLock.readLock().lock();
+    try {
+      DatanodeDescriptor[] nodes = map.get(ipAddr);
+      if (nodes== null) {
+        return null;
+      }
+      LinkedList<DatanodeDescriptor> possible = 
+          new LinkedList<DatanodeDescriptor>();
+      for (DatanodeDescriptor d : nodes) {
+        if (d.getBank() == bank) {
+          possible.add(d);
+        }
+      }
+      if (possible.size() == 0) {
+        return null;
+      }
+      // one or more nodes
+      return possible.get(DFSUtil.getRandom().nextInt(possible.size()));
     } finally {
       hostmapLock.readLock().unlock();
     }
