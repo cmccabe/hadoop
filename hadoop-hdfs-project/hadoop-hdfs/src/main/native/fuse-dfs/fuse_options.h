@@ -34,6 +34,7 @@ struct options {
   int private;
   size_t rdbuffer_size;
   int direct_io;
+  const char *tmpdir;
 } options;
 
 extern struct fuse_opt dfs_opts[];
