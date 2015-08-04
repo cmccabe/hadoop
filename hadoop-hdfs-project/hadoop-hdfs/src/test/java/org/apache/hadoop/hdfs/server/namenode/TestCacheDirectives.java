@@ -88,7 +88,6 @@ import org.apache.hadoop.util.GSet;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.apache.htrace.Sampler;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -967,7 +966,7 @@ public class TestCacheDirectives {
 
     // Uncache and check each path in sequence
     RemoteIterator<CacheDirectiveEntry> entries =
-      new CacheDirectiveIterator(nnRpc, null, Sampler.NEVER);
+      new CacheDirectiveIterator(nnRpc, null, FileSystem.tracer);
     for (int i=0; i<numFiles; i++) {
       CacheDirectiveEntry entry = entries.next();
       nnRpc.removeCacheDirective(entry.getInfo().getId());

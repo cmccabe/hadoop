@@ -28,9 +28,8 @@ import org.apache.commons.logging.Log;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 
-import org.apache.htrace.Span;
-import org.apache.htrace.Trace;
-import org.apache.htrace.TraceScope;
+import org.apache.htrace.core.Span;
+import org.apache.htrace.core.TraceScope;
 
 @InterfaceAudience.Private
 @InterfaceStability.Unstable
@@ -140,11 +139,8 @@ class Globber {
   }
 
   public FileStatus[] glob() throws IOException {
-    TraceScope scope = Trace.startSpan("Globber#glob");
-    Span span = scope.getSpan();
-    if (span != null) {
-      span.addKVAnnotation("pattern", pathPattern.toUri().getPath());
-    }
+    TraceScope scope = FileSystem.tracer.newScope("Globber#glob");
+    scope.addKVAnnotation("pattern", pathPattern.toUri().getPath());
     try {
       return doGlob();
     } finally {

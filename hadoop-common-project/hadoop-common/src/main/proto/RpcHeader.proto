@@ -55,14 +55,14 @@ enum RpcKindProto {
    
 /**
  * Used to pass through the information necessary to continue
- * a trace after an RPC is made. All we need is the traceid
- * (so we know the overarching trace this message is a part of), and
- * the id of the current span when this message was sent, so we know
- * what span caused the new span we will create when this message is received.
+ * a trace after an RPC is made.  The first field is the high 64 bits of the
+ * parent span ID; the second field is the low 64 bits of the parent span ID.
+ * Together, these fields tell us the id of the current span when this RPC
+ * was sent.
  */
 message RPCTraceInfoProto {
-  optional int64 traceId = 1;
-  optional int64 parentId = 2;
+  optional int64 parentIdHigh = 1;
+  optional int64 parentIdLow = 2;
 }
 
 message RpcRequestHeaderProto { // the header for the RpcRequest

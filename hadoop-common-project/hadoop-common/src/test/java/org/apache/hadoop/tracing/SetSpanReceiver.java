@@ -19,9 +19,10 @@ package org.apache.hadoop.tracing;
 
 import com.google.common.base.Supplier;
 import org.apache.hadoop.test.GenericTestUtils;
-import org.apache.htrace.Span;
-import org.apache.htrace.SpanReceiver;
-import org.apache.htrace.HTraceConfiguration;
+import org.apache.htrace.core.Span;
+import org.apache.htrace.core.SpanId;
+import org.apache.htrace.core.SpanReceiver;
+import org.apache.htrace.core.HTraceConfiguration;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -30,16 +31,16 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import org.junit.Assert;
+import sun.net.www.content.text.Generic;
 
 /**
  * Span receiver that puts all spans into a single set.
  * This is useful for testing.
  * <p/>
  * We're not using HTrace's POJOReceiver here so as that doesn't
- * push all the metrics to a static place, and would make testing
- * SpanReceiverHost harder.
+ * push all the metrics to a static place.
  */
-public class SetSpanReceiver implements SpanReceiver {
+public class SetSpanReceiver extends SpanReceiver {
 
   public SetSpanReceiver(HTraceConfiguration conf) {
   }
@@ -68,8 +69,8 @@ public class SetSpanReceiver implements SpanReceiver {
   }
 
   public static class SetHolder {
-    public static ConcurrentHashMap<Long, Span> spans =
-        new ConcurrentHashMap<Long, Span>();
+    public static ConcurrentHashMap<SpanId, Span> spans =
+        new ConcurrentHashMap<SpanId, Span>();
 
     public static Map<String, List<Span>> getMap() {
       Map<String, List<Span>> map = new HashMap<String, List<Span>>();
@@ -94,8 +95,10 @@ public class SetSpanReceiver implements SpanReceiver {
           Map<String, List<Span>> map = SetSpanReceiver.SetHolder.getMap();
           for (String spanName : expectedSpanNames) {
             if (!map.containsKey(spanName)) {
+              System.out.println("WATERMELON: did not find " + spanName);
               return false;
             }
+            System.out.println("WATERMELON: found " + spanName);
           }
           return true;
         }

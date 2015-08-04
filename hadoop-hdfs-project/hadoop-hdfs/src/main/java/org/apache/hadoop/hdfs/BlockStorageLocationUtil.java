@@ -38,6 +38,7 @@ import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.BlockStorageLocation;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.HdfsVolumeId;
 import org.apache.hadoop.fs.VolumeId;
 import org.apache.hadoop.hdfs.protocol.ClientDatanodeProtocol;
@@ -48,9 +49,9 @@ import org.apache.hadoop.hdfs.security.token.block.BlockTokenIdentifier;
 import org.apache.hadoop.hdfs.security.token.block.InvalidBlockTokenException;
 import org.apache.hadoop.ipc.RPC;
 import org.apache.hadoop.security.token.Token;
-import org.apache.htrace.Span;
-import org.apache.htrace.Trace;
-import org.apache.htrace.TraceScope;
+import org.apache.htrace.core.SpanId;
+import org.apache.htrace.core.TraceScope;
+import org.apache.htrace.core.Tracer;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -74,7 +75,7 @@ class BlockStorageLocationUtil {
    */
   private static List<VolumeBlockLocationCallable> createVolumeBlockLocationCallables(
       Configuration conf, Map<DatanodeInfo, List<LocatedBlock>> datanodeBlocks,
-      int timeout, boolean connectToDnViaHostname, Span parent) {
+      int timeout, boolean connectToDnViaHostname, SpanId parentSpanId) {
     
     if (datanodeBlocks.isEmpty()) {
       return Lists.newArrayList();
@@ -114,7 +115,7 @@ class BlockStorageLocationUtil {
       }
       VolumeBlockLocationCallable callable = new VolumeBlockLocationCallable(
           conf, datanode, poolId, blockIds, dnTokens, timeout, 
-          connectToDnViaHostname, parent);
+          connectToDnViaHostname, parentSpanId);
       callables.add(callable);
     }
     return callables;
@@ -138,7 +139,7 @@ class BlockStorageLocationUtil {
 
     List<VolumeBlockLocationCallable> callables = 
         createVolumeBlockLocationCallables(conf, datanodeBlocks, timeoutMs, 
-            connectToDnViaHostname, Trace.currentSpan());
+            connectToDnViaHostname, Tracer.getCurrentSpanId());
     
     // Use a thread pool to execute the Callables in parallel
     List<Future<HdfsBlocksMetadata>> futures = 
@@ -194,7 +195,7 @@ class BlockStorageLocationUtil {
   
   /**
    * Group the per-replica {@link VolumeId} info returned from
-   * {@link DFSClient#queryDatanodesForHdfsBlocksMetadata(Map)} to be
+   * {@link DFSClient#queryDatanodesForHdfsBlocksMetadata} to be
    * associated
    * with the corresponding {@link LocatedBlock}.
    * 
@@ -322,12 +323,12 @@ class BlockStorageLocationUtil {
     private final long[] blockIds;
     private final List<Token<BlockTokenIdentifier>> dnTokens;
     private final boolean connectToDnViaHostname;
-    private final Span parentSpan;
-    
+    private final SpanId parentSpanId;
+
     VolumeBlockLocationCallable(Configuration configuration,
         DatanodeInfo datanode, String poolId, long []blockIds,
         List<Token<BlockTokenIdentifier>> dnTokens, int timeout, 
-        boolean connectToDnViaHostname, Span parentSpan) {
+        boolean connectToDnViaHostname, SpanId parentSpanId) {
       this.configuration = configuration;
       this.timeout = timeout;
       this.datanode = datanode;
@@ -335,7 +336,7 @@ class BlockStorageLocationUtil {
       this.blockIds = blockIds;
       this.dnTokens = dnTokens;
       this.connectToDnViaHostname = connectToDnViaHostname;
-      this.parentSpan = parentSpan;
+      this.parentSpanId = parentSpanId;
     }
     
     public DatanodeInfo getDatanodeInfo() {
@@ -347,8 +348,8 @@ class BlockStorageLocationUtil {
       HdfsBlocksMetadata metadata = null;
       // Create the RPC proxy and make the RPC
       ClientDatanodeProtocol cdp = null;
-      TraceScope scope =
-          Trace.startSpan("getHdfsBlocksMetadata", parentSpan);
+      TraceScope scope = FileSystem.tracer.
+          newScope("getHdfsBlocksMetadata", parentSpanId);
       try {
         cdp = DFSUtil.createClientDatanodeProtocolProxy(datanode, configuration,
             timeout, connectToDnViaHostname);

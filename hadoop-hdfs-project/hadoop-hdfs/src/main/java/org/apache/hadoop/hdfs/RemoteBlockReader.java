@@ -27,6 +27,7 @@ import java.util.EnumSet;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.FSInputChecker;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.ReadOption;
 import org.apache.hadoop.hdfs.net.Peer;
@@ -47,10 +48,7 @@ import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.util.DataChecksum;
-import org.apache.htrace.Sampler;
-import org.apache.htrace.Trace;
-import org.apache.htrace.TraceScope;
-
+import org.apache.htrace.core.TraceScope;
 
 /**
  * @deprecated this is an old implementation that is being left around
@@ -206,9 +204,8 @@ public class RemoteBlockReader extends FSInputChecker implements BlockReader {
   protected synchronized int readChunk(long pos, byte[] buf, int offset, 
                                        int len, byte[] checksumBuf) 
                                        throws IOException {
-    TraceScope scope =
-        Trace.startSpan("RemoteBlockReader#readChunk(" + blockId + ")",
-            Sampler.NEVER);
+    TraceScope scope = FileSystem.tracer.
+        newScope("RemoteBlockReader#readChunk(" + blockId + ")");
     try {
       return readChunkImpl(pos, buf, offset, len, checksumBuf);
     } finally {

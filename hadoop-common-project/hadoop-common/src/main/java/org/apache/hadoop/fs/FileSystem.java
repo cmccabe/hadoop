@@ -62,14 +62,15 @@ import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
+import org.apache.hadoop.tracing.TraceUtils;
 import org.apache.hadoop.util.DataChecksum;
 import org.apache.hadoop.util.Progressable;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.ShutdownHookManager;
 import org.apache.hadoop.util.StringUtils;
-import org.apache.htrace.Span;
-import org.apache.htrace.Trace;
-import org.apache.htrace.TraceScope;
+import org.apache.htrace.core.Tracer;
+import org.apache.htrace.core.TracerBuilder;
+import org.apache.htrace.core.TraceScope;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -100,6 +101,7 @@ public abstract class FileSystem extends Configured implements Closeable {
                    CommonConfigurationKeys.FS_DEFAULT_NAME_DEFAULT;
 
   public static final Log LOG = LogFactory.getLog(FileSystem.class);
+  public static Tracer tracer;
 
   /**
    * Priority of the FileSystem shutdown hook.
@@ -129,6 +131,19 @@ public abstract class FileSystem extends Configured implements Closeable {
   private Set<Path> deleteOnExit = new TreeSet<Path>();
   
   boolean resolveSymlinks;
+
+  static void initializeTracerIfNeeded(Configuration cnf) {
+    synchronized (FileSystem.class) {
+      if (tracer == null) {
+        tracer = new TracerBuilder().
+            name("FSClient").
+            conf(TraceUtils.wrapHadoopConf(CommonConfigurationKeys.
+                FS_CLIENT_HTRACE_PREFIX, cnf)).
+            build();
+      }
+    }
+  }
+
   /**
    * This method adds a file system for testing so that we can find it later. It
    * is only for testing.
@@ -2691,11 +2706,9 @@ public abstract class FileSystem extends Configured implements Closeable {
 
   private static FileSystem createFileSystem(URI uri, Configuration conf
       ) throws IOException {
-    TraceScope scope = Trace.startSpan("FileSystem#createFileSystem");
-    Span span = scope.getSpan();
-    if (span != null) {
-      span.addKVAnnotation("scheme", uri.getScheme());
-    }
+    initializeTracerIfNeeded(conf);
+    TraceScope scope = tracer.newScope("FileSystem#createFileSystem");
+    scope.addKVAnnotation("scheme", uri.getScheme());
     try {
       Class<?> clazz = getFileSystemClass(uri.getScheme(), conf);
       FileSystem fs = (FileSystem)ReflectionUtils.newInstance(clazz, conf);

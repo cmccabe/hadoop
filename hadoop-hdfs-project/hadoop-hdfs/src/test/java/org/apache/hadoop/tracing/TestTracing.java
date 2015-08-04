@@ -19,16 +19,17 @@ package org.apache.hadoop.tracing;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.CommonConfigurationKeys;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.apache.htrace.Sampler;
-import org.apache.htrace.Span;
-import org.apache.htrace.Trace;
-import org.apache.htrace.TraceScope;
+import org.apache.htrace.core.Sampler;
+import org.apache.htrace.core.Span;
+import org.apache.htrace.core.TraceScope;
+import org.apache.htrace.core.TracerBuilder;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -50,17 +51,27 @@ public class TestTracing {
     // write and read without tracing started
     String fileName = "testTracingDisabled.dat";
     writeTestFile(fileName);
-    Assert.assertTrue(SetSpanReceiver.size() == 0);
+    Assert.assertEquals(0, SetSpanReceiver.size());
     readTestFile(fileName);
-    Assert.assertTrue(SetSpanReceiver.size() == 0);
+    Assert.assertEquals(0, SetSpanReceiver.size());
 
     writeWithTracing();
     readWithTracing();
   }
 
-  public void writeWithTracing() throws Exception {
+  private void writeWithTracing() throws Exception {
+    FileSystem.tracer.addSampler(Sampler.ALWAYS);
+    try {
+      writeWithTracingImpl();
+    } finally {
+      FileSystem.tracer.removeSampler(Sampler.ALWAYS);
+    }
+  }
+
+  private void writeWithTracingImpl() throws Exception {
     long startTime = System.currentTimeMillis();
-    TraceScope ts = Trace.startSpan("testWriteTraceHooks", Sampler.ALWAYS);
+    TraceScope ts = FileSystem.tracer.
+        newScope("testWriteTraceHooks");
     writeTestFile("testWriteTraceHooks.dat");
     long endTime = System.currentTimeMillis();
     ts.close();
@@ -107,7 +118,8 @@ public class TestTracing {
     };
     for (String desc : spansInTopTrace) {
       for (Span span : map.get(desc)) {
-        Assert.assertEquals(ts.getSpan().getTraceId(), span.getTraceId());
+        Assert.assertEquals(ts.getSpan().getSpanId().getHigh(),
+                            span.getSpanId().getHigh());
       }
     }
 
@@ -120,12 +132,21 @@ public class TestTracing {
     SetSpanReceiver.clear();
   }
 
-  public void readWithTracing() throws Exception {
-    String fileName = "testReadTraceHooks.dat";
-    writeTestFile(fileName);
+  private void readWithTracing() throws Exception {
+    writeTestFile("testReadTraceHooks.dat");
+    FileSystem.tracer.addSampler(Sampler.ALWAYS);
+    try {
+      readWithTracingImpl();
+    } finally {
+      FileSystem.tracer.removeSampler(Sampler.ALWAYS);
+    }
+  }
+
+  private void readWithTracingImpl() throws Exception {
     long startTime = System.currentTimeMillis();
-    TraceScope ts = Trace.startSpan("testReadTraceHooks", Sampler.ALWAYS);
-    readTestFile(fileName);
+    TraceScope ts = FileSystem.tracer.
+        newScope("testReadTraceHooks");
+    readTestFile("testReadTraceHooks.dat");
     ts.close();
     long endTime = System.currentTimeMillis();
 
@@ -150,7 +171,11 @@ public class TestTracing {
     // There should only be one trace id as it should all be homed in the
     // top trace.
     for (Span span : SetSpanReceiver.getSpans()) {
-      Assert.assertEquals(ts.getSpan().getTraceId(), span.getTraceId());
+      System.out.println(span.toJson());
+    }
+    for (Span span : SetSpanReceiver.getSpans()) {
+      Assert.assertEquals(ts.getSpan().getSpanId().getHigh(),
+                          span.getSpanId().getHigh());
     }
     SetSpanReceiver.clear();
   }
@@ -189,9 +214,11 @@ public class TestTracing {
   public static void setup() throws IOException {
     conf = new Configuration();
     conf.setLong("dfs.blocksize", 100 * 1024);
-    conf.set(DFSConfigKeys.DFS_CLIENT_HTRACE_PREFIX +
-        SpanReceiverHost.SPAN_RECEIVERS_CONF_SUFFIX,
+    conf.set(CommonConfigurationKeys.FS_CLIENT_HTRACE_PREFIX +
+            TracerBuilder.SPAN_RECEIVER_CLASSES_KEY,
         SetSpanReceiver.class.getName());
+    conf.set(CommonConfigurationKeys.FS_CLIENT_HTRACE_PREFIX +
+            TracerBuilder.SAMPLER_CLASSES_KEY, "NeverSampler");
   }
 
   @Before

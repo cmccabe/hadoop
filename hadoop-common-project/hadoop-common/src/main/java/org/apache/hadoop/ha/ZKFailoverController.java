@@ -39,6 +39,7 @@ import org.apache.hadoop.ha.ActiveStandbyElector.ActiveStandbyElectorCallback;
 import org.apache.hadoop.ha.HAServiceProtocol.HAServiceState;
 import org.apache.hadoop.ha.HAServiceProtocol.StateChangeRequestInfo;
 import org.apache.hadoop.ha.HAServiceProtocol.RequestSource;
+import org.apache.hadoop.tracing.TraceUtils;
 import org.apache.hadoop.util.ZKUtil;
 import org.apache.hadoop.util.ZKUtil.ZKAuthInfo;
 import org.apache.hadoop.ha.HealthMonitor.State;
@@ -48,6 +49,8 @@ import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authorize.PolicyProvider;
 import org.apache.hadoop.util.StringUtils;
+import org.apache.htrace.core.Tracer;
+import org.apache.htrace.core.TracerBuilder;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.hadoop.util.ToolRunner;
@@ -100,6 +103,7 @@ public abstract class ZKFailoverController {
   
   protected Configuration conf;
   private String zkQuorum;
+  protected final Tracer tracer;
   protected final HAServiceTarget localTarget;
 
   private HealthMonitor healthMonitor;
@@ -130,6 +134,10 @@ public abstract class ZKFailoverController {
   private Object activeAttemptRecordLock = new Object();
 
   protected ZKFailoverController(Configuration conf, HAServiceTarget localTarget) {
+    this.tracer = new TracerBuilder().
+        name("Zkfc").
+        conf(TraceUtils.wrapHadoopConf("zkfc.htrace.", conf)).
+        build();
     this.localTarget = localTarget;
     this.conf = conf;
   }
@@ -309,7 +317,8 @@ public abstract class ZKFailoverController {
   
   protected void initRPC() throws IOException {
     InetSocketAddress bindAddr = getRpcAddressToBindTo();
-    rpcServer = new ZKFCRpcServer(conf, bindAddr, this, getPolicyProvider());
+    rpcServer = new ZKFCRpcServer(conf, bindAddr, this,
+        getPolicyProvider(), tracer);
   }
 
   protected void startRPC() throws IOException {

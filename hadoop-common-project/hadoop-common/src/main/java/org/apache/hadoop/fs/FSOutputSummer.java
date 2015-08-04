@@ -21,8 +21,7 @@ package org.apache.hadoop.fs;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.util.DataChecksum;
-import org.apache.htrace.NullScope;
-import org.apache.htrace.TraceScope;
+import org.apache.htrace.core.TraceScope;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -197,7 +196,7 @@ abstract public class FSOutputSummer extends OutputStream {
   }
 
   protected TraceScope createWriteTraceScope() {
-    return NullScope.INSTANCE;
+    return FileSystem.tracer.newNullScope();
   }
 
   /** Generate checksums for the given data chunks and output chunks & checksums

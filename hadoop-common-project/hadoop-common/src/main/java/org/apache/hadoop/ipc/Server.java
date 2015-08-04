@@ -117,10 +117,10 @@ import org.apache.hadoop.util.ProtoUtil;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.util.Time;
-import org.apache.htrace.Span;
-import org.apache.htrace.Trace;
-import org.apache.htrace.TraceInfo;
-import org.apache.htrace.TraceScope;
+import org.apache.htrace.core.Span;
+import org.apache.htrace.core.SpanId;
+import org.apache.htrace.core.TraceScope;
+import org.apache.htrace.core.Tracer;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
@@ -141,6 +141,7 @@ public abstract class Server {
   private List<AuthMethod> enabledAuthMethods;
   private RpcSaslProto negotiateResponse;
   private ExceptionsHandler exceptionsHandler = new ExceptionsHandler();
+  private Tracer tracer;
   
   public void addTerseExceptions(Class<?>... exceptionClass) {
     exceptionsHandler.addTerseExceptions(exceptionClass);
@@ -525,7 +526,7 @@ public abstract class Server {
     private ByteBuffer rpcResponse;       // the response for this call
     private final RPC.RpcKind rpcKind;
     private final byte[] clientId;
-    private final Span traceSpan; // the tracing span on the server side
+    private final TraceScope traceScope;  // the HTrace scope on the server side
 
     public Call(int id, int retryCount, Writable param, 
         Connection connection) {
@@ -539,7 +540,7 @@ public abstract class Server {
     }
 
     public Call(int id, int retryCount, Writable param, Connection connection,
-        RPC.RpcKind kind, byte[] clientId, Span span) {
+        RPC.RpcKind kind, byte[] clientId, TraceScope traceScope) {
       this.callId = id;
       this.retryCount = retryCount;
       this.rpcRequest = param;
@@ -548,7 +549,7 @@ public abstract class Server {
       this.rpcResponse = null;
       this.rpcKind = kind;
       this.clientId = clientId;
-      this.traceSpan = span;
+      this.traceScope = traceScope;
     }
     
     @Override
@@ -1958,19 +1959,23 @@ public abstract class Server {
             RpcErrorCodeProto.FATAL_DESERIALIZING_REQUEST, err);
       }
         
-      Span traceSpan = null;
+      TraceScope traceScope = null;
       if (header.hasTraceInfo()) {
-        // If the incoming RPC included tracing info, always continue the trace
-        TraceInfo parentSpan = new TraceInfo(header.getTraceInfo().getTraceId(),
-                                             header.getTraceInfo().getParentId());
-        traceSpan = Trace.startSpan(
-            RpcClientUtil.toTraceName(rpcRequest.toString()),
-            parentSpan).detach();
+        if (tracer != null) {
+          // If the incoming RPC included tracing info, always continue the trace
+          SpanId parentSpanId = new SpanId(
+              header.getTraceInfo().getParentIdHigh(),
+              header.getTraceInfo().getParentIdLow());
+          traceScope = tracer.newScope(
+              RpcClientUtil.toTraceName(rpcRequest.toString()),
+              parentSpanId);
+          traceScope.detach();
+        }
       }
 
       Call call = new Call(header.getCallId(), header.getRetryCount(),
           rpcRequest, this, ProtoUtil.convert(header.getRpcKind()),
-          header.getClientId().toByteArray(), traceSpan);
+          header.getClientId().toByteArray(), traceScope);
 
       if (callQueue.isClientBackoffEnabled()) {
         // if RPC queue is full, we will ask the RPC client to back off by
@@ -2153,8 +2158,9 @@ public abstract class Server {
           Writable value = null;
 
           CurCall.set(call);
-          if (call.traceSpan != null) {
-            traceScope = Trace.continueSpan(call.traceSpan);
+          if (call.traceScope != null) {
+            call.traceScope.reattach();
+            traceScope = call.traceScope;
             traceScope.getSpan().addTimelineAnnotation("called");
           }
 
@@ -2231,15 +2237,15 @@ public abstract class Server {
         } catch (InterruptedException e) {
           if (running) {                          // unexpected -- log it
             LOG.info(Thread.currentThread().getName() + " unexpectedly interrupted", e);
-            if (Trace.isTracing()) {
-              traceScope.getSpan().addTimelineAnnotation("unexpectedly interrupted: " +
+            if (traceScope != null) {
+              traceScope.addTimelineAnnotation("unexpectedly interrupted: " +
                   StringUtils.stringifyException(e));
             }
           }
         } catch (Exception e) {
           LOG.info(Thread.currentThread().getName() + " caught an exception", e);
-          if (Trace.isTracing()) {
-            traceScope.getSpan().addTimelineAnnotation("Exception: " +
+          if (traceScope != null) {
+            traceScope.addTimelineAnnotation("Exception: " +
                 StringUtils.stringifyException(e));
           }
         } finally {
@@ -2554,6 +2560,10 @@ public abstract class Server {
   
   /** Sets the socket buffer size used for responding to RPCs */
   public void setSocketSendBufSize(int size) { this.socketSendBufferSize = size; }
+
+  public void setTracer(Tracer tracer) {
+    this.tracer = tracer;
+  }
 
   /** Starts the service.  Must be called before any calls will be handled. */
   public synchronized void start() {

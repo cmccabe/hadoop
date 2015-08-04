@@ -36,10 +36,9 @@ import org.apache.hadoop.tools.TableListing;
 import org.apache.hadoop.tracing.TraceUtils;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.htrace.Sampler;
-import org.apache.htrace.SamplerBuilder;
-import org.apache.htrace.Trace;
-import org.apache.htrace.TraceScope;
+import org.apache.htrace.core.TraceScope;
+import org.apache.htrace.core.Tracer;
+import org.apache.htrace.core.TracerBuilder;
 
 /** Provide command line access to a FileSystem. */
 @InterfaceAudience.Private
@@ -52,7 +51,6 @@ public class FsShell extends Configured implements Tool {
   private FileSystem fs;
   private Trash trash;
   protected CommandFactory commandFactory;
-  private Sampler traceSampler;
 
   private final String usagePrefix =
     "Usage: hadoop fs [generic options]";
@@ -278,8 +276,10 @@ public class FsShell extends Configured implements Tool {
   public int run(String argv[]) throws Exception {
     // initialize FsShell
     init();
-    traceSampler = new SamplerBuilder(TraceUtils.
-        wrapHadoopConf("dfs.shell.htrace.", getConf())).build();
+    Tracer tracer = new TracerBuilder().
+        name("FsShell").
+        conf(TraceUtils.wrapHadoopConf("fs.shell.htrace.", getConf())).
+        build();
     int exitCode = -1;
     if (argv.length < 1) {
       printUsage(System.err);
@@ -291,7 +291,7 @@ public class FsShell extends Configured implements Tool {
         if (instance == null) {
           throw new UnknownCommandException();
         }
-        TraceScope scope = Trace.startSpan(instance.getCommandName(), traceSampler);
+        TraceScope scope = tracer.newScope(instance.getCommandName());
         try {
           exitCode = instance.run(Arrays.copyOfRange(argv, 1, argv.length));
         } finally {
@@ -309,6 +309,7 @@ public class FsShell extends Configured implements Tool {
         e.printStackTrace(System.err);
       }
     }
+    tracer.close();
     return exitCode;
   }
   

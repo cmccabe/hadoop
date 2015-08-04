@@ -31,6 +31,7 @@ import java.util.UUID;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.ReadOption;
 import org.apache.hadoop.hdfs.net.Peer;
 import org.apache.hadoop.hdfs.protocol.DatanodeID;
@@ -50,9 +51,7 @@ import org.apache.hadoop.hdfs.shortcircuit.ClientMmap;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.util.DataChecksum;
-import org.apache.htrace.Sampler;
-import org.apache.htrace.Trace;
-import org.apache.htrace.TraceScope;
+import org.apache.htrace.core.TraceScope;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -141,8 +140,8 @@ public class RemoteBlockReader2  implements BlockReader {
     }
 
     if (curDataSlice == null || curDataSlice.remaining() == 0 && bytesNeededToFinish > 0) {
-      TraceScope scope = Trace.startSpan(
-          "RemoteBlockReader2#readNextPacket(" + blockId + ")", Sampler.NEVER);
+      TraceScope scope = FileSystem.tracer.newScope(
+          "RemoteBlockReader2#readNextPacket(" + blockId + ")");
       try {
         readNextPacket();
       } finally {
@@ -169,8 +168,8 @@ public class RemoteBlockReader2  implements BlockReader {
   @Override
   public synchronized int read(ByteBuffer buf) throws IOException {
     if (curDataSlice == null || curDataSlice.remaining() == 0 && bytesNeededToFinish > 0) {
-      TraceScope scope = Trace.startSpan(
-          "RemoteBlockReader2#readNextPacket(" + blockId + ")", Sampler.NEVER);
+      TraceScope scope = FileSystem.tracer.newScope(
+          "RemoteBlockReader2#readNextPacket(" + blockId + ")");
       try {
         readNextPacket();
       } finally {

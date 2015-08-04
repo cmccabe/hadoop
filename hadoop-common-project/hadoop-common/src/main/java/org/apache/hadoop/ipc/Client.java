@@ -92,12 +92,14 @@ import org.apache.hadoop.util.ProtoUtil;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.util.Time;
-import org.apache.htrace.Trace;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.CodedOutputStream;
+import org.apache.htrace.core.Span;
+import org.apache.htrace.core.TraceScope;
+import org.apache.htrace.core.Tracer;
 
 /** A client for an IPC service.  IPC calls take a single {@link Writable} as a
  * parameter, and return a {@link Writable} as their value.  A service runs on
@@ -717,8 +719,9 @@ public class Client {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Connecting to "+server);
         }
-        if (Trace.isTracing()) {
-          Trace.addTimelineAnnotation("IPC client connecting to " + server);
+        Span span = Tracer.getCurrentSpan();
+        if (span != null) {
+          span.addTimelineAnnotation("IPC client connecting to " + server);
         }
         short numRetries = 0;
         Random rand = null;
@@ -791,8 +794,9 @@ public class Client {
           // update last activity time
           touch();
 
-          if (Trace.isTracing()) {
-            Trace.addTimelineAnnotation("IPC client connected to " + server);
+          span = Tracer.getCurrentSpan();
+          if (span != null) {
+            span.addTimelineAnnotation("IPC client connected to " + server);
           }
 
           // start the receiver thread after the socket connection has been set

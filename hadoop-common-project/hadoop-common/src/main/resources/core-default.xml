@@ -1925,4 +1925,13 @@ for ldap providers in the same way as above does.
     <name>hadoop.shell.missing.defaultFs.warning</name>
     <value>false</value>
   </property>
+
+  <property>
+    <name>hadoop.htrace.spanreceiver.classes</name>
+    <value></value>
+    <description>
+      The class name of the HTrace SpanReceivers to use inside Hadoop.  If
+      there are no class names supplied here, tracing will be turned off.
+    </description>
+  </property>
 </configuration>

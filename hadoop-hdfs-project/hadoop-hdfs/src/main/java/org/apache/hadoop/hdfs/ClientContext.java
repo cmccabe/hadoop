@@ -30,6 +30,7 @@ import org.apache.hadoop.hdfs.shortcircuit.ShortCircuitCache;
 import org.apache.hadoop.hdfs.util.ByteArrayManager;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.htrace.core.Tracer;
 
 /**
  * ClientContext contains context information for a client.

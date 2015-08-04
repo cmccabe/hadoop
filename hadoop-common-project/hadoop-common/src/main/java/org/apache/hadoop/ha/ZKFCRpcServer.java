@@ -34,6 +34,7 @@ import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.authorize.PolicyProvider;
 
 import com.google.protobuf.BlockingService;
+import org.apache.htrace.core.Tracer;
 
 @InterfaceAudience.LimitedPrivate("HDFS")
 @InterfaceStability.Evolving
@@ -46,7 +47,8 @@ public class ZKFCRpcServer implements ZKFCProtocol {
   ZKFCRpcServer(Configuration conf,
       InetSocketAddress bindAddr,
       ZKFailoverController zkfc,
-      PolicyProvider policy) throws IOException {
+      PolicyProvider policy,
+      Tracer tracer) throws IOException {
     this.zkfc = zkfc;
     
     RPC.setProtocolEngine(conf, ZKFCProtocolPB.class,
@@ -65,7 +67,7 @@ public class ZKFCRpcServer implements ZKFCProtocol {
         CommonConfigurationKeys.HADOOP_SECURITY_AUTHORIZATION, false)) {
       server.refreshServiceAcl(conf, policy);
     }
-
+    server.setTracer(tracer);
   }
   
   void start() {
